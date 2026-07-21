@@ -2,7 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getProfiles } from "@/lib/profiles";
 
-const PUBLIC_PATHS = ["/login", "/auth", "/api/keepalive", "/api/profile-login"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/auth",
+  "/api/keepalive",
+  "/api/profile-login",
+  "/demo",
+  "/api/demo",
+];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

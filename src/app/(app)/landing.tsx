@@ -111,12 +111,18 @@ export function Landing() {
             exams, a study plan — and answers that always show the page they
             came from.
           </p>
-          <div className="relative mt-8">
+          <div className="relative mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/login"
               className="inline-block rounded-2xl bg-rose-600 px-7 py-3.5 text-base font-semibold text-white shadow-[0_10px_30px_-10px_rgba(225,29,72,0.6)] transition hover:-translate-y-0.5 hover:bg-rose-700 active:scale-95"
             >
               Start studying →
+            </Link>
+            <Link
+              href="/demo"
+              className="inline-block rounded-2xl border border-rose-200 bg-white px-7 py-3.5 text-base font-semibold text-rose-600 transition hover:-translate-y-0.5 hover:border-rose-400 active:scale-95"
+            >
+              Try the live demo
             </Link>
           </div>
         </section>

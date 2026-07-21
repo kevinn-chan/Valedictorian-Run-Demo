@@ -83,6 +83,11 @@ Storage + Auth) · Vercel AI SDK · Gemini free tier (OpenAI as a drop-in fallba
 
 ## Try it
 
+**Poke the live demo →** **[valedictorian-run.vercel.app/demo](https://valedictorian-run.vercel.app/demo)**
+— a read-only sample course, already compiled: browse the wiki and ask it cited
+questions, no sign-in. (It's the `/demo` route in this repo; point `DEMO_SESSION_ID`
+at one of your own compiled sessions to enable it on your deploy.)
+
 **Deploy your own** (≈15 min; needs free Supabase + Gemini accounts):
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkevinn-chan%2FFirst-Class-Honours&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ALLOWED_EMAILS,PROFILES,GOOGLE_GENERATIVE_AI_API_KEY&envDescription=Supabase%20project%20keys%2C%20allowlisted%20emails%2C%20and%20a%20Gemini%20API%20key)
