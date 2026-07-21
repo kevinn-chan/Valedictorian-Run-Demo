@@ -1,74 +1,114 @@
-# Valedictorian Run
+# RAG is dead? — a working take
 
-Turn a course's raw materials — lecture PDFs, notes, cheatsheets — into a complete study
-system: a browsable topic **wiki**, per-file **digests**, a targeted **learning plan**,
-spaced-repetition **flashcards**, **teach-back** grading, timed **mock exams**, and a
-**Q&A chat that answers only from your materials, with page citations**.
+**Our answer: mostly yes, for the common case — and here's a real, deployed app that runs on
+that bet.**
 
-Runs at **$0/month** on free tiers (Next.js on Vercel + Supabase + Gemini).
+**Valedictorian Run** turns a course's PDFs and notes into a study system — a browsable topic
+wiki, spaced-repetition flashcards, mock exams, teach-back grading, and a Q&A chat that answers
+only from your materials *with page citations*. It does the thing everyone reaches for
+("chat with your documents"), but with **no embeddings and no vector database anywhere.**
+It's our take on the "RAG is dead" idea Andrej Karpathy and others have been circling.
 
-> ⚠️ **Read [SECURITY.md](SECURITY.md) before deploying this for anyone but yourself.**
-> As shipped, this is a private app for a tiny, trusted group: the login screen is a
-> click-to-enter **profile picker with no password** — *knowing the URL grants access.*
-> That is a deliberate choice for a 2-person deployment, **not** something to expose
-> publicly as-is. SECURITY.md explains exactly what to change first (swap in real auth,
-> remove the allowlist, add per-user rate limits + bring-your-own API key).
+---
 
-## Why it's interesting: compile-on-ingest, not vector RAG
+## The idea
 
-Most "chat with your docs" apps chunk text, embed it, and do vector-similarity search at
-query time (classic RAG). This one deliberately **doesn't** — there are no embeddings and
-no vector database anywhere.
+"RAG is dead" is deliberately provocative. The precise version:
 
-Instead, at **upload time** an LLM reads each document once and *compiles* it into a durable
-artifact: a structured wiki (topics, formulas, exam traps) plus faithfully page-labeled text
-chunks. Then at query time:
+> As context windows grow, the classic RAG pipeline — chunk → embed → vector-similarity
+> top-k → stuff the prompt — becomes unnecessary machinery for any corpus that already fits
+> in context. Retrieval isn't banned; **reaching for a vector DB by default is what's dying.**
 
-- **Tier A (the common case):** the whole compiled corpus is small enough to drop *entirely*
-  into the model's context window — no retrieval at all.
-- **Tier B (large corpora only):** falls back to cheap **lexical** full-text search
-  (Postgres `tsvector`), never vectors.
+Karpathy's framing is *context engineering*: do the expensive understanding **up front**, put
+the right material in the context window, and stop treating a vector index as a prerequisite
+for grounding.
 
-The bet is Karpathy's "context engineering over retrieval": do the expensive understanding
-**up front**, keep the source's page references for citations, and skip the vector machinery.
-See [`src/lib/answer.ts`](src/lib/answer.ts) and [`src/lib/ingest.ts`](src/lib/ingest.ts).
+## Our take
 
-## Features
+We took that seriously and built a real product around it. Two moves:
+
+**1. Compile-on-ingest, not embed-on-ingest.** &nbsp;([`src/lib/ingest.ts`](src/lib/ingest.ts))
+When you upload a file, an LLM reads it *once* and compiles it into durable artifacts:
+- a structured **wiki** — topics, formulas, common exam traps; and
+- faithfully **page-labeled chunks** — every page transcribed.
+
+The expensive "understanding" happens once, at upload — not on every query.
+
+**2. Full context first; lexical retrieval only as a fallback.** &nbsp;([`src/lib/answer.ts`](src/lib/answer.ts))
+- **Tier A (almost always):** the *entire* compiled corpus is dropped into the model's context
+  window. No retrieval step at all.
+- **Tier B (only past ~600k chars):** cheap **lexical** full-text search (Postgres `tsvector`)
+  selects the relevant pages — still no embeddings, still no vectors.
+
+Grounding survives because we keep the page labels: every claim links back to `[file p.N]`.
+You get RAG's one genuinely valuable output — **cited, source-anchored answers** — without the
+vector plumbing.
+
+## Does it actually work? (honest scorecard)
+
+- ✅ **For a course-sized corpus, yes.** A semester of slides compiles to well under the context
+  budget; the model answers from the whole thing at once, cites the right pages, and refuses
+  ("that isn't in your materials") instead of hallucinating.
+- ✅ **Simpler and cheaper to operate.** No vector DB, no embedding pipeline, no re-indexing —
+  just Postgres.
+- ⚠️ **The tail still needs retrieval.** Past ~600k chars we fall back to lexical search. So the
+  honest claim isn't "retrieval is dead" — it's **"vector RAG is unnecessary for the common
+  case; lightweight keyword retrieval covers the rest."**
+- ⚠️ **You pay up front.** Compile-on-ingest spends a real LLM call per document. The bet is that
+  cost amortizes across every later query — chat, cards, quizzes, and teach-back all read the
+  same clean compiled corpus.
+
+The take, in one line: **for bounded, personal corpora, compile + long-context + lexical
+fallback beats vector RAG on simplicity and grounding, and matches it on quality.**
+
+---
+
+## The app that proves it
 
 - **Sessions** — one per course; holds the full corpus.
 - **Compile-on-ingest** — PDFs/notes → page-cited chunks + a topic wiki + file digests.
-- **Corpus wiki** — browsable topics with concise/full toggle and prev/next navigation.
+- **Corpus wiki** — browsable topics, concise/full toggle, prev/next navigation.
 - **Learning plan** — a day-by-day plan grounded only in your compiled corpus.
 - **Flashcards** — auto-generated, SM-2-lite spaced repetition with keyboard grading.
-- **Teach-back** — explain a topic from memory; get graded strictly against your materials.
+- **Teach-back** — explain a topic from memory; graded strictly against your materials.
 - **Mock exams** — fresh 10-question papers, each answer cited; attempt history persists.
-- **Grounded chat** — answers only from the corpus, every claim linked to its source page;
-  says "that isn't in your materials" instead of guessing.
+- **Grounded chat** — corpus-only answers, every claim linked to its source page.
 - **Mastery heatmap** — per-topic mastery from your review history.
 
-## Tech stack
+**Stack:** Next.js 16 (App Router) · TypeScript · Tailwind v4 · Supabase (Postgres + RLS +
+Storage + Auth) · Vercel AI SDK · Gemini free tier (OpenAI as a drop-in fallback). Runs at
+**$0/month**.
 
-Next.js 16 (App Router) · TypeScript · Tailwind v4 · Supabase (Postgres + RLS + Storage +
-Auth) · Vercel AI SDK · Gemini (free tier; OpenAI as a drop-in fallback via `LLM_PROVIDER`).
+---
 
-Row-Level Security isolates every user's data at the database layer — the data model is
-already multi-tenant; only the login screen is single-purpose (see SECURITY.md).
+## Try it
 
-## Quickstart (self-host)
+**Deploy your own** (≈15 min; needs free Supabase + Gemini accounts):
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkevinn-chan%2FFirst-Class-Honours&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ALLOWED_EMAILS,PROFILES,GOOGLE_GENERATIVE_AI_API_KEY&envDescription=Supabase%20project%20keys%2C%20allowlisted%20emails%2C%20and%20a%20Gemini%20API%20key)
+
+Then follow **[SETUP.md](SETUP.md)** for the Supabase project + running the migration in
+`supabase/migrations/`. Or run locally:
 
 ```bash
 npm install
-cp .env.example .env.local     # fill in your Supabase + Gemini values
-npm run dev                    # http://localhost:3000
+cp .env.example .env.local   # fill in your Supabase + Gemini values
+npm run dev                  # http://localhost:3000
 ```
 
-Then follow **[SETUP.md](SETUP.md)** for the ~15-minute cloud setup (Supabase project → run
-the migration in `supabase/migrations/` → Gemini API key → deploy to Vercel).
+**Want a click-and-go hosted demo instead of deploying?** Heads up: as shipped, the login is a
+passwordless **profile picker** meant for a private, two-person deployment — *knowing the URL
+grants access* (see **[SECURITY.md](SECURITY.md)**). So today the safe way for a stranger to try
+it is to deploy their own. A shared public demo needs real sign-in **and** per-user API keys
+(so no one shares the owner's Gemini quota) — that's the intended next step, sketched in
+SECURITY.md.
 
-## Documentation
+---
 
+## Docs
+
+- [SECURITY.md](SECURITY.md) — the auth model, what's safe, and what to change before any public deploy.
 - [SETUP.md](SETUP.md) — click-by-click cloud setup.
-- [SECURITY.md](SECURITY.md) — the auth model and what to change before any public deploy.
 - [PLAN.md](PLAN.md) — architecture and build phases.
 - [PRODUCT.md](PRODUCT.md) — product/design context.
 - [PLATFORM-FACTS.md](PLATFORM-FACTS.md) — verified free-tier platform limits.
