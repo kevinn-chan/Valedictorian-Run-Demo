@@ -1,9 +1,14 @@
 import { getProfiles } from "@/lib/profiles";
 
-// Profile picker — the whole sign-in. Clicking a profile signs you in
-// server-side; no emails, no passwords. Private-by-link, by design.
-export default function LoginPage() {
+// Sign-in gate: one shared password (real Supabase auth), then pick a profile.
+// Knowing the URL is no longer enough — the password is required.
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const profiles = getProfiles();
+  const { error } = await searchParams;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#FFF7F8] px-6 text-rose-950">
@@ -15,14 +20,31 @@ export default function LoginPage() {
           Who&apos;s studying?
         </h1>
         <p className="mt-2 text-sm text-rose-900/70">
-          Your course materials, compiled into a study system.
+          Enter the shared password, then pick your profile.
         </p>
 
-        <div className="mt-12 flex items-start justify-center gap-8">
-          {profiles.map((p) => (
-            <form key={p.email} action="/api/profile-login" method="post">
-              <input type="hidden" name="email" value={p.email} />
+        <form action="/api/profile-login" method="post" className="mt-8">
+          <input
+            name="password"
+            type="password"
+            required
+            autoFocus
+            autoComplete="current-password"
+            placeholder="Shared password"
+            className="h-11 w-full rounded-xl border border-rose-200 bg-white px-4 text-center text-sm text-rose-950 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-200"
+          />
+          {error && (
+            <p className="mt-3 text-sm text-red-600">
+              Wrong password — try again.
+            </p>
+          )}
+
+          <div className="mt-8 flex items-start justify-center gap-8">
+            {profiles.map((p) => (
               <button
+                key={p.email}
+                name="email"
+                value={p.email}
                 type="submit"
                 className="group flex w-28 cursor-pointer flex-col items-center gap-3"
               >
@@ -33,14 +55,15 @@ export default function LoginPage() {
                   {p.name}
                 </span>
               </button>
-            </form>
-          ))}
-          {profiles.length === 0 && (
-            <p className="text-sm text-red-600">
-              No profiles configured — set the PROFILES env var.
-            </p>
-          )}
-        </div>
+            ))}
+          </div>
+        </form>
+
+        {profiles.length === 0 && (
+          <p className="mt-6 text-sm text-red-600">
+            No profiles configured — set the PROFILES env var.
+          </p>
+        )}
       </div>
     </main>
   );

@@ -101,12 +101,12 @@ cp .env.example .env.local   # fill in your Supabase + Gemini values
 npm run dev                  # http://localhost:3000
 ```
 
-**Want a click-and-go hosted demo instead of deploying?** Heads up: as shipped, the login is a
-passwordless **profile picker** meant for a private, two-person deployment — *knowing the URL
-grants access* (see **[SECURITY.md](SECURITY.md)**). So today the safe way for a stranger to try
-it is to deploy their own. A shared public demo needs real sign-in **and** per-user API keys
-(so no one shares the owner's Gemini quota) — that's the intended next step, sketched in
-SECURITY.md.
+**A note on the login:** sign-in is a **single shared password** (real Supabase
+`signInWithPassword`) that then lets you pick either profile — built for a small, trusted
+group, not open public signup. The public **[`/demo`](https://valedictorian-run.vercel.app/demo)**
+above is how strangers try it without an account. See **[SECURITY.md](SECURITY.md)** for exactly
+what to change before an open multi-user deploy (per-user signup, drop the allowlist, per-user
+rate limits + bring-your-own API key).
 
 ---
 
