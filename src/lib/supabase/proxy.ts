@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
   "/api/profile-login",
   "/demo",
   "/api/demo",
+  "/api/figure", // route enforces its own access (own figures, or the demo session's)
 ];
 
 export async function updateSession(request: NextRequest) {

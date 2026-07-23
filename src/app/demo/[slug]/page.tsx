@@ -13,12 +13,20 @@ export default async function DemoWikiPage({
   const { slug } = await params;
   if (!DEMO_SESSION_ID) notFound();
   const sb = demoReader();
-  const { data: page } = await sb
-    .from("wiki_pages")
-    .select("title, markdown, source_refs")
-    .eq("session_id", DEMO_SESSION_ID)
-    .eq("slug", slug)
-    .single();
+  const [{ data: page }, { data: figures }] = await Promise.all([
+    sb
+      .from("wiki_pages")
+      .select("title, markdown, source_refs")
+      .eq("session_id", DEMO_SESSION_ID)
+      .eq("slug", slug)
+      .single(),
+    sb
+      .from("figures")
+      .select("id, page, caption")
+      .eq("session_id", DEMO_SESSION_ID)
+      .eq("topic_slug", slug)
+      .order("page"),
+  ]);
   if (!page) notFound();
 
   const pages = (page.source_refs as { pages?: number[] } | null)?.pages;
@@ -55,6 +63,40 @@ export default async function DemoWikiPage({
         <div className="mt-8">
           <MarkdownView markdown={page.markdown} />
         </div>
+
+        {figures && figures.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-sm font-semibold text-rose-900/60">
+              Figures from the source
+            </h2>
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {figures.map((f) => (
+                <figure
+                  key={f.id}
+                  className="overflow-hidden rounded-xl border border-rose-200 bg-white"
+                >
+                  <a
+                    href={`/api/figure/${f.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/api/figure/${f.id}`}
+                      alt={f.caption ?? `Figure on page ${f.page}`}
+                      loading="lazy"
+                      className="max-h-96 w-full bg-white object-contain"
+                    />
+                  </a>
+                  <figcaption className="px-3 py-2 text-xs text-rose-900/50">
+                    {f.caption ? `${f.caption} · ` : ""}p.{f.page}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );

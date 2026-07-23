@@ -4,6 +4,74 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // for typical sessions). Tier B: FTS-selected chunks + all topic summaries.
 const TIER_A_MAX_CHARS = 600_000;
 
+export type ImagePart = { type: "image"; image: Uint8Array; mediaType: string };
+
+// Pick the figures most relevant to the question and load them as image parts,
+// so a multimodal model can actually see the diagrams/graphs — not just their
+// transcribed captions. Cheap when a session has no figures (one metadata query,
+// then nothing). Capped to keep latency and tokens sane.
+export async function selectFigureImages(
+  supabase: SupabaseClient,
+  sessionId: string,
+  question: string,
+  max = 4
+): Promise<ImagePart[]> {
+  if (!question.trim()) return [];
+  const { data: figs } = await supabase
+    .from("figures")
+    .select("page, caption, storage_path")
+    .eq("session_id", sessionId);
+  if (!figs?.length) return [];
+
+  // Pages the question lexically hits — figures on those pages are most relevant.
+  const { data: hits } = await supabase
+    .from("chunks")
+    .select("page_from, page_to")
+    .eq("session_id", sessionId)
+    .textSearch("tsv", question, { type: "websearch" })
+    .limit(8);
+  const hitPages = new Set<number>();
+  for (const h of hits ?? [])
+    for (let p = h.page_from; p <= h.page_to; p++) hitPages.add(p);
+
+  const qWords = new Set(question.toLowerCase().match(/[a-z]{4,}/g) ?? []);
+  const score = (f: { page: number; caption: string | null }) => {
+    let s = hitPages.has(f.page) ? 3 : 0;
+    for (const w of f.caption?.toLowerCase().match(/[a-z]{4,}/g) ?? [])
+      if (qWords.has(w)) s += 1;
+    return s;
+  };
+
+  const chosen = figs
+    .map((f) => ({ f, s: score(f) }))
+    .filter((x) => x.s > 0)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, max)
+    .map((x) => x.f);
+
+  // Download the chosen figures in parallel — up to `max` independent round-trips
+  // to storage; running them sequentially added that latency to every question.
+  // Each is individually non-fatal: a bad figure never breaks the answer.
+  const parts = await Promise.all(
+    chosen.map(async (f): Promise<ImagePart | null> => {
+      try {
+        const { data: blob } = await supabase.storage
+          .from("session-files")
+          .download(f.storage_path as string);
+        if (!blob) return null;
+        return {
+          type: "image",
+          image: new Uint8Array(await blob.arrayBuffer()),
+          mediaType: "image/webp",
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+  return parts.filter((p): p is ImagePart => p !== null);
+}
+
 type ChunkRow = {
   page_from: number;
   page_to: number;

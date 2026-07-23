@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // mupdf is a wasm package — keep it out of the bundler so ingest can load it.
+  serverExternalPackages: ["mupdf"],
 };
 
 export default nextConfig;

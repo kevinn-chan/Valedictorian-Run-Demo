@@ -14,10 +14,17 @@ export default async function Home() {
   const email = (auth.claims.email as string | undefined)?.toLowerCase();
   const profileName = getProfiles().find((p) => p.email === email)?.name;
 
-  const { data: sessions } = await supabase
-    .from("sessions")
-    .select("id, title, created_at, files(count)")
-    .order("created_at", { ascending: false });
+  const now = new Date().toISOString();
+  const [{ data: sessions }, { count: dueCount }] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select("id, title, created_at, files(count)")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("cards")
+      .select("id", { count: "exact", head: true })
+      .lte("due_at", now),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-10">
@@ -27,6 +34,18 @@ export default async function Home() {
       <p className="mt-1 text-sm text-muted-foreground">
         One session per course — drop in materials, get a study system.
       </p>
+
+      {dueCount ? (
+        <Link
+          href="/review"
+          className="mt-6 flex items-center justify-between rounded-xl border border-primary/30 bg-accent/50 px-5 py-4 transition hover:border-primary/50 hover:bg-accent"
+        >
+          <span className="text-sm font-medium">
+            {dueCount} card{dueCount === 1 ? "" : "s"} due today
+          </span>
+          <span className="text-sm font-medium text-primary">Review all →</span>
+        </Link>
+      ) : null}
 
       <form action={createSession} className="mt-8 flex gap-2">
         <input

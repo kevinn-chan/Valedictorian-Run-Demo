@@ -14,10 +14,8 @@ export async function GET(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
   const { error } = await admin.from("sessions").select("id").limit(1);
+  if (error) console.error("keepalive failed:", error.message);
 
-  return NextResponse.json({
-    ok: !error,
-    at: new Date().toISOString(),
-    ...(error ? { error: error.message } : {}),
-  });
+  // Don't echo DB error text to unauthenticated callers — just liveness.
+  return NextResponse.json({ ok: !error, at: new Date().toISOString() });
 }

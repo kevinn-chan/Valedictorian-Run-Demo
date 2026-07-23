@@ -7,6 +7,7 @@ import {
   Layers,
   MessageCircleQuestion,
   Presentation,
+  TrendingUp,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Uploader } from "./uploader";
@@ -93,6 +94,9 @@ export default async function SessionPage({
     { href: "chat", label: "Ask", Icon: MessageCircleQuestion },
     { href: "teach", label: "Teach back", Icon: Presentation },
     { href: "quiz", label: "Mock exam", Icon: GraduationCap },
+    ...((cardCount ?? 0) > 0
+      ? [{ href: "analytics", label: "Progress", Icon: TrendingUp }]
+      : []),
   ];
 
   return (

@@ -132,7 +132,7 @@ export default async function DemoPage() {
             The whole thing is open source — deploy your own in a few minutes.
           </p>
           <a
-            href="https://github.com/kevinn-chan/First-Class-Honours"
+            href="https://github.com/kevinn-chan/Valedictorian-Run-Demo"
             target="_blank"
             rel="noreferrer"
             className="mt-6 inline-block rounded-2xl bg-white px-7 py-3.5 text-base font-semibold text-rose-600 transition hover:-translate-y-0.5 active:scale-95"

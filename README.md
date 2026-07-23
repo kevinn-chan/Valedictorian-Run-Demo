@@ -29,10 +29,14 @@ We took that seriously and built a real product around it. Two moves:
 
 **1. Compile-on-ingest, not embed-on-ingest.** &nbsp;([`src/lib/ingest.ts`](src/lib/ingest.ts))
 When you upload a file, an LLM reads it *once* and compiles it into durable artifacts:
-- a structured **wiki** — topics, formulas, common exam traps; and
-- faithfully **page-labeled chunks** — every page transcribed.
+- a structured **wiki** — topics, formulas, common exam traps;
+- faithfully **page-labeled chunks** — every page transcribed; and
+- **figures** — the model flags pages with real diagrams; we rasterize them (`mupdf` → `sharp`
+  → WebP), store them, and link each to its topic.
 
-The expensive "understanding" happens once, at upload — not on every query.
+The expensive "understanding" happens once, at upload — not on every query. And because a figure
+is just its stored image plus a page label, the chat can *read a diagram* and answer from it,
+still cited — **multimodal grounding, still no vector index.**
 
 **2. Full context first; lexical retrieval only as a fallback.** &nbsp;([`src/lib/answer.ts`](src/lib/answer.ts))
 - **Tier A (almost always):** the *entire* compiled corpus is dropped into the model's context
@@ -67,17 +71,19 @@ fallback beats vector RAG on simplicity and grounding, and matches it on quality
 
 - **Sessions** — one per course; holds the full corpus.
 - **Compile-on-ingest** — PDFs/notes → page-cited chunks + a topic wiki + file digests.
+- **Visual-aware ingest** — figures rasterized, stored, and topic-linked; the chat reads a diagram and answers from it, cited.
 - **Corpus wiki** — browsable topics, concise/full toggle, prev/next navigation.
 - **Learning plan** — a day-by-day plan grounded only in your compiled corpus.
 - **Flashcards** — auto-generated, SM-2-lite spaced repetition with keyboard grading.
+- **Due-today queue** — one cross-session review of every card due now, graded in place.
 - **Teach-back** — explain a topic from memory; graded strictly against your materials.
 - **Mock exams** — fresh 10-question papers, each answer cited; attempt history persists.
 - **Grounded chat** — corpus-only answers, every claim linked to its source page.
-- **Mastery heatmap** — per-topic mastery from your review history.
+- **Progress** — per-topic mastery from your review history, plus mock-exam accuracy over time.
 
 **Stack:** Next.js 16 (App Router) · TypeScript · Tailwind v4 · Supabase (Postgres + RLS +
-Storage + Auth) · Vercel AI SDK · Gemini free tier (OpenAI as a drop-in fallback). Runs at
-**$0/month**.
+Storage + Auth) · Vercel AI SDK · Gemini free tier (OpenAI as a drop-in fallback) · `mupdf` +
+`sharp` for figure rasterization. Runs at **$0/month**.
 
 ---
 
@@ -90,7 +96,7 @@ at one of your own compiled sessions to enable it on your deploy.)
 
 **Deploy your own** (≈15 min; needs free Supabase + Gemini accounts):
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkevinn-chan%2FFirst-Class-Honours&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ALLOWED_EMAILS,PROFILES,GOOGLE_GENERATIVE_AI_API_KEY&envDescription=Supabase%20project%20keys%2C%20allowlisted%20emails%2C%20and%20a%20Gemini%20API%20key)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkevinn-chan%2FValedictorian-Run-Demo&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ALLOWED_EMAILS,PROFILES,GOOGLE_GENERATIVE_AI_API_KEY&envDescription=Supabase%20project%20keys%2C%20allowlisted%20emails%2C%20and%20a%20Gemini%20API%20key)
 
 Then follow **[SETUP.md](SETUP.md)** for the Supabase project + running the migration in
 `supabase/migrations/`. Or run locally:

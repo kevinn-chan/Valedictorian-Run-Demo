@@ -14,6 +14,7 @@ interface Card {
   ease: number;
   reps: number;
   lapses: number;
+  session_title?: string | null; // shown only in the cross-session "due today" queue
 }
 
 // "Good · 3d" style preview of where each grade sends the card
@@ -26,7 +27,7 @@ export function ReviewClient({
   sessionId,
   cards,
 }: {
-  sessionId: string;
+  sessionId?: string; // omitted in the cross-session "due today" queue
   cards: Card[];
 }) {
   const [queue, setQueue] = useState(cards);
@@ -73,10 +74,10 @@ export function ReviewClient({
           Come back when the next cards fall due.
         </p>
         <Link
-          href={`/sessions/${sessionId}`}
+          href={sessionId ? `/sessions/${sessionId}` : "/"}
           className="mt-6 inline-block text-sm font-medium hover:underline"
         >
-          ← Back to session
+          {sessionId ? "← Back to session" : "← Home"}
         </Link>
       </div>
     );
@@ -92,6 +93,11 @@ export function ReviewClient({
         onClick={() => setFlipped((f) => !f)}
         className="card-soft card-lift mt-4 w-full cursor-pointer p-10 text-left"
       >
+        {card.session_title && (
+          <p className="mb-3 text-xs font-medium text-primary/80">
+            {card.session_title}
+          </p>
+        )}
         <p className="text-base leading-relaxed">{card.front}</p>
         {flipped && (
           <div className="animate-in fade-in slide-in-from-bottom-2 mt-6 border-t pt-6 duration-300">
