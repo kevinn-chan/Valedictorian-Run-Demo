@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, FileText, Layers, Plus, Search, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, FileText, Flame, Layers, Plus, Search, Sparkles, Target } from "lucide-react";
 import { DeleteButton } from "./delete-button";
 import { createClient } from "@/lib/supabase/server";
 import { createSession, deleteSession } from "./actions";
@@ -16,24 +16,25 @@ export default async function Home() {
   const profileName = getProfiles().find((p) => p.email === email)?.name;
 
   const now = new Date().toISOString();
-  const [{ data: sessions }, { data: cards }, { count: topicCount }, { data: figures }] =
+  const [{ data: sessions }, { data: cards }, { count: topicCount }, { data: figures }, { data: reviews }] =
     await Promise.all([
       supabase
         .from("sessions")
         .select("id, title, created_at, files(count)")
         .order("created_at", { ascending: false }),
-      // One read powers every per-session number below — no N+1.
       supabase.from("cards").select("session_id, reps, lapses, due_at"),
       supabase
         .from("wiki_pages")
         .select("*", { count: "exact", head: true })
         .eq("kind", "topic"),
-      // Card covers come from the user's own extracted diagrams. One read,
-      // first figure per session wins; sessions with none get an initials panel.
       supabase
         .from("figures")
         .select("id, session_id, page")
         .order("page"),
+      supabase
+        .from("reviews")
+        .select("reviewed_at")
+        .order("reviewed_at", { ascending: false }),
     ]);
 
   const coverBySession = new Map<
@@ -46,6 +47,25 @@ export default async function Home() {
         id: f.id,
         page: f.page,
       });
+
+  // Streak: count consecutive days with at least one review, ending today
+  const DAILY_GOAL = 10;
+  const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local tz
+  const reviewDays = new Set(
+    (reviews ?? []).map((r) =>
+      new Date(r.reviewed_at).toLocaleDateString("en-CA")
+    )
+  );
+  const todayCount = (reviews ?? []).filter(
+    (r) => new Date(r.reviewed_at).toLocaleDateString("en-CA") === todayStr
+  ).length;
+  let streak = 0;
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  while (reviewDays.has(d.toLocaleDateString("en-CA"))) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
 
   const all = cards ?? [];
   const dueCount = all.filter((c) => c.due_at <= now).length;
@@ -255,6 +275,44 @@ export default async function Home() {
                 <ArrowRight className="size-4" />
               </Link>
             )}
+          </div>
+
+          <div
+            className="rounded-2xl border bg-card p-5"
+            style={{ boxShadow: "var(--shadow-soft)" }}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Daily streak</h2>
+              <Flame className={`size-4 ${streak > 0 ? "text-orange-500" : "text-muted-foreground"}`} />
+            </div>
+            <div className="mt-3 flex items-baseline gap-1.5">
+              <span className="text-3xl font-semibold tabular-nums tracking-tight">
+                {streak}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                day{streak === 1 ? "" : "s"}
+              </span>
+            </div>
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Target className="size-3" />
+                  Today
+                </span>
+                <span className="font-medium tabular-nums">
+                  {todayCount}/{DAILY_GOAL}
+                </span>
+              </div>
+              <ProgressBar
+                value={Math.min(todayCount / DAILY_GOAL, 1)}
+                className="mt-2"
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                {todayCount >= DAILY_GOAL
+                  ? "Goal hit — keep the streak alive tomorrow."
+                  : `${DAILY_GOAL - todayCount} more to hit today's goal.`}
+              </p>
+            </div>
           </div>
 
           <div
