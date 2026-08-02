@@ -16,16 +16,16 @@ export default async function Home() {
   const profileName = getProfiles().find((p) => p.email === email)?.name;
 
   const now = new Date().toISOString();
-  const [{ data: sessions }, { data: cards }, { count: topicCount }, { data: figures }, { data: reviews }] =
+  const [{ data: sessions }, { data: cards }, { data: topicPages }, { data: figures }, { data: reviews }] =
     await Promise.all([
       supabase
         .from("sessions")
         .select("id, title, created_at, files(count)")
         .order("created_at", { ascending: false }),
-      supabase.from("cards").select("session_id, reps, lapses, due_at"),
+      supabase.from("cards").select("session_id, topic_slug, reps, lapses, due_at"),
       supabase
         .from("wiki_pages")
-        .select("*", { count: "exact", head: true })
+        .select("slug, title, session_id")
         .eq("kind", "topic"),
       supabase
         .from("figures")
@@ -68,10 +68,34 @@ export default async function Home() {
   }
 
   const all = cards ?? [];
+  const topicCount = topicPages?.length ?? 0;
   const dueCount = all.filter((c) => c.due_at <= now).length;
   const mastered = all.filter((c) => c.reps >= 2).length;
   const started = all.filter((c) => c.reps > 0 || c.lapses > 0).length;
   const masteryPct = all.length ? mastered / all.length : 0;
+
+  // Weakest topics: rank all topics by mastery %, take bottom 5
+  const sessionTitleMap = new Map(
+    (sessions ?? []).map((s) => [s.id, s.title])
+  );
+  const weakestTopics = (topicPages ?? [])
+    .map((t) => {
+      const cs = all.filter(
+        (c) => c.session_id === t.session_id && c.topic_slug === t.slug
+      );
+      const m = cs.filter((c) => c.reps >= 2).length;
+      return {
+        slug: t.slug,
+        title: t.title,
+        sessionId: t.session_id,
+        sessionTitle: sessionTitleMap.get(t.session_id) ?? "",
+        cards: cs.length,
+        pct: cs.length ? m / cs.length : 0,
+      };
+    })
+    .filter((t) => t.cards > 0)
+    .sort((a, b) => a.pct - b.pct)
+    .slice(0, 5);
 
   const stats = (sid: string) => {
     const cs = all.filter((c) => c.session_id === sid);
@@ -314,6 +338,44 @@ export default async function Home() {
               </p>
             </div>
           </div>
+
+          {weakestTopics.length > 0 && (
+            <div
+              className="rounded-2xl border bg-card p-5"
+              style={{ boxShadow: "var(--shadow-soft)" }}
+            >
+              <h2 className="text-sm font-semibold">Weakest topics</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Across all sessions — review these first.
+              </p>
+              <ul className="mt-3 space-y-2.5">
+                {weakestTopics.map((t) => (
+                  <li key={`${t.sessionId}-${t.slug}`}>
+                    <Link
+                      href={`/sessions/${t.sessionId}/wiki/${t.slug}`}
+                      prefetch={false}
+                      className="group block"
+                    >
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="min-w-0 flex-1 truncate text-sm transition-colors group-hover:text-primary">
+                          {t.title}
+                        </span>
+                        <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+                          {Math.round(t.pct * 100)}%
+                        </span>
+                      </div>
+                      <div className="mt-0.5 flex items-center justify-between">
+                        <span className="truncate text-[11px] text-muted-foreground">
+                          {t.sessionTitle}
+                        </span>
+                      </div>
+                      <ProgressBar value={t.pct} className="mt-1.5" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div
             className="rounded-2xl border bg-card p-5"
