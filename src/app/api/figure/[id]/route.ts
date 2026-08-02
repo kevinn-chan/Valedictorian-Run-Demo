@@ -35,7 +35,7 @@ export async function GET(
       .select("storage_path, session_id")
       .eq("id", id)
       .single();
-    if (demo?.session_id === DEMO_SESSION_ID) {
+    if (DEMO_SESSION_ID && demo?.session_id === DEMO_SESSION_ID) {
       storagePath = demo.storage_path as string;
     }
   }
