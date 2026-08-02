@@ -11,6 +11,9 @@ export type OcclusionRef = {
   kind: "occlusion";
   figureId: string;
   rect: { x: number; y: number; w: number; h: number };
+  // Source page of the figure, so occlusion cards cite "p. N" like text cards.
+  // Optional: cards created before this was threaded through simply omit it.
+  page?: number;
 };
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
@@ -43,7 +46,8 @@ export function buildOcclusionCards(
   figureId: string,
   topicSlug: string | null,
   caption: string | null,
-  regions: Region[]
+  regions: Region[],
+  page: number | null
 ): OcclusionCardRow[] {
   const rows: OcclusionCardRow[] = [];
   for (const r of regions) {
@@ -66,6 +70,7 @@ export function buildOcclusionCards(
           w: clamp01(r.w),
           h: clamp01(r.h),
         },
+        ...(typeof page === "number" ? { page } : {}),
       },
     });
   }

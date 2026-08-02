@@ -26,7 +26,7 @@ export async function POST(
 
   const { data: fig } = await supabase
     .from("figures")
-    .select("id, session_id, topic_slug, caption")
+    .select("id, session_id, topic_slug, caption, page")
     .eq("id", figureId)
     .single();
   if (!fig || fig.session_id !== sessionId) {
@@ -38,7 +38,8 @@ export async function POST(
     figureId,
     (fig.topic_slug as string | null) ?? null,
     (fig.caption as string | null) ?? null,
-    regions
+    regions,
+    (fig.page as number | null) ?? null
   );
   if (!rows.length) {
     return NextResponse.json({ error: "no valid regions" }, { status: 400 });
