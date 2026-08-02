@@ -50,6 +50,18 @@ export async function recordExam(
   revalidatePath(`/sessions/${sessionId}/quiz`);
 }
 
+export async function setExamDate(formData: FormData) {
+  const id = formData.get("id") as string;
+  const date = (formData.get("exam_date") as string) || null;
+  if (!id) return;
+
+  const supabase = await createClient();
+  await supabase.from("sessions").update({ exam_date: date }).eq("id", id);
+
+  revalidatePath(`/sessions/${id}`);
+  revalidatePath("/");
+}
+
 export async function deleteSession(formData: FormData) {
   const id = formData.get("id") as string;
   if (!id) return;

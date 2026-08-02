@@ -16,6 +16,7 @@ import { CompileButton } from "./compile-button";
 import { CardsButton } from "./cards-button";
 import { StatusPoller } from "./status-poller";
 import { RenameTitle } from "./rename-title";
+import { ExamCountdown } from "./exam-countdown";
 import { ProgressBar, ProgressRing } from "@/components/ui-kit";
 
 const CHIP: Record<string, string> = {
@@ -50,7 +51,7 @@ export default async function SessionPage({
     { data: topicCards },
     { count: figureCount },
   ] = await Promise.all([
-    supabase.from("sessions").select("id, title").eq("id", id).single(),
+    supabase.from("sessions").select("id, title, exam_date").eq("id", id).single(),
     supabase
       .from("files")
       .select("id, name, bytes, pages, ingest_status, created_at")
@@ -190,6 +191,9 @@ export default async function SessionPage({
             {topicCount > 0 && ` · ${topicCount} topics`}
             {cardCount > 0 && ` · ${cardCount} cards`}
           </p>
+          <div className="mt-3">
+            <ExamCountdown sessionId={session.id} examDate={session.exam_date} />
+          </div>
         </div>
 
         {compiled && cardCount > 0 && (
