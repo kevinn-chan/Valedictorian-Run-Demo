@@ -60,42 +60,44 @@
   --radius-2xl: calc(var(--radius) * 1.8);
 }
 
-/* Valedictorian Run — restrained palette anchored on the rose seed
-   oklch(0.754 0.193 343.4). Warmth lives in the brand color and type,
-   never in a cream surface: paper is a whisper of the brand hue. */
+/* Valedictorian Run — restrained palette anchored on the periwinkle seed
+   indigo-600 #4f46e5 (oklch ~0.51 0.21 277). Blue with a violet lean: the brief asked
+   for pastel blue, and a true cold blue would fight the "warm" in the brand
+   personality. Neutrals are tinted toward the brand hue, not toward warmth.
+   Semantic red/amber/green (grade buttons, mastery status, ingest chips) are
+   deliberately NOT part of this palette — they must keep meaning bad/ok/good. */
 :root {
   color-scheme: light;
-  /* Committed warm-blush theme — one light palette shared with the landing.
-     Values are the landing's exact rose scale so app + marketing coincide. */
-  --shadow-soft: 0 10px 36px -14px oklch(0.5 0.19 350 / 0.16);
-  --shadow-soft-hover: 0 16px 44px -14px oklch(0.5 0.19 350 / 0.24);
-  --background: #fff7f8;
-  --foreground: #4c0519;
+  /* Committed periwinkle theme — one light palette shared with the landing. */
+  --shadow-soft: 0 10px 36px -14px oklch(0.5 0.19 280 / 0.16);
+  --shadow-soft-hover: 0 16px 44px -14px oklch(0.5 0.19 280 / 0.24);
+  --background: #f7f8ff;
+  --foreground: #1e1b4b;
   --card: #ffffff;
-  --card-foreground: #4c0519;
+  --card-foreground: #1e1b4b;
   --popover: #ffffff;
-  --popover-foreground: #4c0519;
-  --primary: #e11d48;
+  --popover-foreground: #1e1b4b;
+  --primary: #4f46e5;
   --primary-foreground: #ffffff;
-  --secondary: #ffe4e6;
-  --secondary-foreground: #9f1239;
-  --muted: #fdecee;
-  --muted-foreground: #8f5763;
-  --accent: #ffe4e6;
-  --accent-foreground: #9f1239;
+  --secondary: #e0e7ff;
+  --secondary-foreground: #3730a3;
+  --muted: #eef2ff;
+  --muted-foreground: #61658f;
+  --accent: #e0e7ff;
+  --accent-foreground: #3730a3;
   --destructive: #dc2626;
-  --border: #fbd8dd;
-  --input: #fbd8dd;
-  --ring: #e11d48;
+  --border: #dcdefa;
+  --input: #dcdefa;
+  --ring: #4f46e5;
   --radius: 0.75rem;
-  --sidebar: #fff1f2;
-  --sidebar-foreground: #4c0519;
-  --sidebar-primary: #e11d48;
+  --sidebar: #eef2ff;
+  --sidebar-foreground: #1e1b4b;
+  --sidebar-primary: #4f46e5;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ffe4e6;
-  --sidebar-accent-foreground: #9f1239;
-  --sidebar-border: #fbd8dd;
-  --sidebar-ring: #e11d48;
+  --sidebar-accent: #e0e7ff;
+  --sidebar-accent-foreground: #3730a3;
+  --sidebar-border: #dcdefa;
+  --sidebar-ring: #4f46e5;
 }
 
 /* Landing-grade soft depth + tactile feedback for the whole app */
@@ -128,6 +130,42 @@
   }
 }
 
+@utility section-gap {
+  padding-block: clamp(3rem, 6vw, 5rem);
+}
+@utility section-gap-sm {
+  padding-block: clamp(2rem, 4vw, 3rem);
+}
+
+@utility card-tint {
+  background-color: var(--muted);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+}
+
+@utility page-title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--foreground);
+}
+
+@utility animate-slide-up {
+  animation: slide-up 300ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@utility perspective-1000 {
+  perspective: 1000px;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -144,7 +182,7 @@
     text-wrap: balance;
   }
   ::selection {
-    background: oklch(0.54 0.17 343 / 0.18);
+    background: oklch(0.54 0.17 280 / 0.18);
   }
   :focus-visible {
     outline: 2px solid var(--ring);

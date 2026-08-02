@@ -1,5 +1,6 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { MobileBar, Sidebar } from "@/components/sidebar";
+import { getProfiles } from "@/lib/profiles";
 
 export default async function AppLayout({
   children,
@@ -11,27 +12,43 @@ export default async function AppLayout({
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims) return <>{children}</>;
 
+  const email = (data.claims.email as string | undefined)?.toLowerCase();
+  const profileName = getProfiles().find((p) => p.email === email)?.name ?? null;
+
+  // The rail needs the session list and per-session due dots. RLS scopes both
+  // to the owner, so one grouped round-trip covers the whole shell.
+  const nowIso = new Date().toISOString();
+  const [{ data: sessions }, { data: dueCards }] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select("id, title")
+      .order("created_at", { ascending: false }),
+    supabase.from("cards").select("session_id").lte("due_at", nowIso),
+  ]);
+
+  const dueBySession = new Map<string, number>();
+  for (const c of dueCards ?? [])
+    dueBySession.set(c.session_id, (dueBySession.get(c.session_id) ?? 0) + 1);
+
+  const rows = (sessions ?? []).map((s) => ({
+    id: s.id,
+    title: s.title,
+    cards: 0,
+    due: dueBySession.get(s.id) ?? 0,
+  }));
+
   return (
-    <>
-      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between px-6">
-          <Link
-            href="/"
-            className="text-sm font-semibold tracking-tight hover:text-primary"
-          >
-            <span className="text-primary">●</span> Valedictorian Run
-          </Link>
-          <form action="/auth/signout" method="post">
-            <button
-              type="submit"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Sign out
-            </button>
-          </form>
-        </div>
-      </header>
-      <div className="flex-1">{children}</div>
-    </>
+    <div className="flex min-h-dvh">
+      <Sidebar
+        sessions={rows}
+        dueCount={dueCards?.length ?? 0}
+        profileName={profileName}
+      />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <MobileBar dueCount={dueCards?.length ?? 0} />
+        {/* Bottom padding clears the mobile tab bar; lg drops it. */}
+        <div className="flex-1 pb-20 lg:pb-0">{children}</div>
+      </div>
+    </div>
   );
 }

@@ -88,6 +88,72 @@ Do not invent content that is not in the document.`;
 // model sneaks in anyway (wiki-facing markdown only; chunks stay verbatim).
 const stripLatex = (s: string) => s.replace(/\$\$?([^$\n]+?)\$\$?/g, "$1");
 
+// Recompile-safe card re-tagging. On recompile the LLM redraws topic slugs, so a
+// card's stored topic_slug no longer matches any topic (it orphans → Ungrouped).
+// A card knows its source page (source_ref.page) and every new topic knows the
+// pages it covers, so remap by page overlap — most specific (fewest pages) wins.
+// Returns the new slug, or null to leave the card where it is.
+export function pickTopicSlug(
+  page: number | null | undefined,
+  topics: { slug: string; pages: number[] }[]
+): string | null {
+  if (page == null) return null;
+  const matches = topics.filter((t) => t.pages?.includes(page));
+  if (!matches.length) return null;
+  return matches.sort((a, b) => a.pages.length - b.pages.length)[0].slug;
+}
+
+// Diff a file's existing figure rows against the freshly-compiled page list, by
+// page number, so recompile can UPDATE in place instead of delete-all/insert-all
+// (which would mint new UUIDs and orphan occlusion cards that reference them).
+export function diffFigures(
+  existing: { id: string; page: number; storage_path: string }[],
+  newPages: number[]
+): {
+  toUpdate: { id: string; page: number; storage_path: string }[];
+  toInsert: number[];
+  toDelete: { id: string; page: number; storage_path: string }[];
+} {
+  const newSet = new Set(newPages);
+  const existByPage = new Map(existing.map((e) => [e.page, e]));
+  return {
+    toUpdate: existing.filter((e) => newSet.has(e.page)),
+    toInsert: newPages.filter((p) => !existByPage.has(p)),
+    toDelete: existing.filter((e) => !newSet.has(e.page)),
+  };
+}
+
+// Re-point this file's cards at the just-inserted topics, preserving SRS state
+// (we UPDATE topic_slug only — never delete/regenerate, which would wipe reps).
+// The `${fileTag}-` prefix is stable across recompiles, so it identifies exactly
+// this file's cards even after the slug tail drifted.
+async function retagCards(
+  supabase: SupabaseClient,
+  sessionId: string,
+  fileTag: string,
+  topics: { slug: string; pages: number[] }[]
+): Promise<number> {
+  const { data: cards } = await supabase
+    .from("cards")
+    .select("id, topic_slug, source_ref")
+    .eq("session_id", sessionId)
+    .like("topic_slug", `${fileTag}-%`);
+  if (!cards?.length) return 0;
+
+  let moved = 0;
+  // ponytail: per-card UPDATE (≤ a few hundred cards/file); batch via an RPC only
+  // if a single file ever carries thousands of cards.
+  for (const c of cards) {
+    const page = (c.source_ref as { page?: number } | null)?.page;
+    const next = pickTopicSlug(page, topics);
+    if (next && next !== c.topic_slug) {
+      await supabase.from("cards").update({ topic_slug: next }).eq("id", c.id);
+      moved++;
+    }
+  }
+  return moved;
+}
+
 export async function ingestFile(
   supabase: SupabaseClient,
   fileId: string
@@ -173,6 +239,22 @@ export async function ingestFile(
   const { error: wikiErr } = await supabase.from("wiki_pages").insert(wikiRows);
   if (wikiErr) throw new Error(wikiErr.message);
 
+  // Re-point existing cards at the new topic slugs (non-fatal — an orphaned card
+  // just falls into the Ungrouped bucket, which analytics already handles).
+  try {
+    await retagCards(
+      supabase,
+      file.session_id,
+      fileTag,
+      object.topics.map((t) => ({ slug: `${fileTag}-${t.slug}`, pages: t.pages }))
+    );
+  } catch (e) {
+    console.error(
+      "card re-tag failed (cards unaffected):",
+      e instanceof Error ? e.message : e
+    );
+  }
+
   // ---- figures: rasterize the pages the model flagged, store, and link to a
   // topic. Wrapped whole: an enhancement that must never fail the text compile. ----
   let figureCount = 0;
@@ -200,8 +282,12 @@ export async function ingestFile(
 
 type CompileResult = z.infer<typeof CompileSchema>;
 
-// Replace this file's figures (rows + storage), rasterize the flagged pages to
-// WebP, upload under the session prefix, and insert rows. Returns count stored.
+// Sync this file's figures (rows + storage) with the freshly-compiled page
+// list: pages present before and after are UPDATEd in place (preserving their
+// UUID, so occlusion cards referencing source_ref.figureId survive recompile),
+// pages only in the old set are deleted, pages only in the new set are
+// inserted. Rasterizes every wanted page (updates need fresh images too).
+// Returns count stored.
 async function ingestFigures(
   supabase: SupabaseClient,
   file: { id: string; session_id: string },
@@ -209,17 +295,15 @@ async function ingestFigures(
   bytes: Uint8Array,
   object: CompileResult
 ): Promise<number> {
-  // Clear the previous run's figures for this file (rows + their storage objects).
-  const { data: oldFigs } = await supabase
+  const { data: existingRaw } = await supabase
     .from("figures")
-    .select("storage_path")
+    .select("id, page, storage_path")
     .eq("file_id", file.id);
-  if (oldFigs?.length) {
-    await supabase.storage
-      .from("session-files")
-      .remove(oldFigs.map((f) => f.storage_path as string));
-    await supabase.from("figures").delete().eq("file_id", file.id);
-  }
+  const existing = (existingRaw ?? []) as {
+    id: string;
+    page: number;
+    storage_path: string;
+  }[];
 
   const wanted = object.figures ?? [];
   const distinctPages = [
@@ -227,45 +311,87 @@ async function ingestFigures(
       wanted.map((f) => f.page).filter((p) => Number.isInteger(p) && p > 0)
     ),
   ];
+
+  const { toUpdate, toInsert, toDelete } = diffFigures(existing, distinctPages);
+
+  // Pages dropped from this recompile: remove their storage objects + rows.
+  if (toDelete.length) {
+    await supabase.storage
+      .from("session-files")
+      .remove(toDelete.map((f) => f.storage_path));
+    await supabase
+      .from("figures")
+      .delete()
+      .in("id", toDelete.map((f) => f.id));
+  }
+
   if (!distinctPages.length) return 0;
 
-  // Belt for orphaned objects (a prior run that stored but didn't record a row).
-  await supabase.storage
-    .from("session-files")
-    .remove(distinctPages.map((p) => `${file.session_id}/fig_${fileTag}_p${p}.webp`));
+  // Belt for orphaned objects from a prior run that stored but didn't record a
+  // row — only applies to brand-new pages, never to pages we're updating.
+  if (toInsert.length) {
+    await supabase.storage
+      .from("session-files")
+      .remove(toInsert.map((p) => `${file.session_id}/fig_${fileTag}_p${p}.webp`));
+  }
 
   const rasters = await rasterizePages(bytes, distinctPages);
   if (!rasters.length) return 0;
 
-  const rows: Record<string, unknown>[] = [];
+  const updateByPage = new Map(toUpdate.map((f) => [f.page, f]));
+  const insertSet = new Set(toInsert);
+
+  let stored = 0;
+  const insertRows: Record<string, unknown>[] = [];
   for (const r of rasters) {
     const meta = wanted.find((f) => f.page === r.page);
     const path = `${file.session_id}/fig_${fileTag}_p${r.page}.webp`;
     const { error: upErr } = await supabase.storage
       .from("session-files")
-      .upload(path, r.webp, { contentType: "image/webp" });
+      .upload(path, r.webp, { contentType: "image/webp", upsert: true });
     if (upErr) {
       console.error("figure upload failed", path, upErr.message);
       continue;
     }
-    rows.push({
-      file_id: file.id,
-      session_id: file.session_id,
-      page: r.page,
-      storage_path: path,
+
+    const fields = {
       caption: meta?.caption ?? null,
       topic_slug: meta ? resolveFigureTopic(object.topics, fileTag, meta) : null,
       kind: meta?.kind ?? null,
       width: r.width,
       height: r.height,
-    });
-  }
-  if (!rows.length) return 0;
+      storage_path: path,
+    };
 
-  const { error: figErr } = await supabase.from("figures").insert(rows);
-  if (figErr) {
-    console.error("figure insert failed:", figErr.message);
-    return 0;
+    const existingRow = updateByPage.get(r.page);
+    if (existingRow) {
+      const { error: updErr } = await supabase
+        .from("figures")
+        .update(fields)
+        .eq("id", existingRow.id);
+      if (updErr) {
+        console.error("figure update failed:", updErr.message);
+        continue;
+      }
+      stored++;
+    } else if (insertSet.has(r.page)) {
+      insertRows.push({
+        file_id: file.id,
+        session_id: file.session_id,
+        page: r.page,
+        ...fields,
+      });
+    }
   }
-  return rows.length;
+
+  if (insertRows.length) {
+    const { error: figErr } = await supabase.from("figures").insert(insertRows);
+    if (figErr) {
+      console.error("figure insert failed:", figErr.message);
+    } else {
+      stored += insertRows.length;
+    }
+  }
+
+  return stored;
 }

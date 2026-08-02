@@ -44,7 +44,7 @@ function AssistantMessage({
   files: FileRef[];
 }) {
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_li]:my-0.5">
+    <div className="prose prose-sm max-w-none leading-relaxed [&_li]:my-0.5">
       <ReactMarkdown
         components={{
           a: ({ href, children }) => (
@@ -89,16 +89,16 @@ export function ChatClient({
   const busy = status === "submitted" || status === "streaming";
 
   return (
-    <div className="mt-8 flex flex-col gap-4">
-      <div className="space-y-5">
+    <div className="flex min-h-[60vh] flex-col">
+      <div className="flex-1 space-y-4 pb-24">
         {messages.length === 0 && (
-          <div>
-            <p className="text-sm text-muted-foreground">
+          <div className="flex flex-col items-center pt-16 text-center">
+            <p className="max-w-sm text-sm text-muted-foreground">
               Ask anything about your materials. Every answer cites the page it
               came from — and if it isn&apos;t in your files, it says so
               instead of guessing.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
               {starters.map((q) => (
                 <button
                   key={q}
@@ -116,27 +116,37 @@ export function ChatClient({
             key={m.id}
             className={
               m.role === "user"
-                ? "ml-12 rounded-xl bg-secondary px-4 py-3 text-sm"
-                : "text-sm"
+                ? "flex justify-end"
+                : ""
             }
           >
-            {m.parts.map((p, i) =>
-              p.type === "text" ? (
-                m.role === "assistant" ? (
-                  <AssistantMessage key={i} text={p.text} files={files} />
-                ) : (
-                  <span key={i} className="whitespace-pre-wrap">
-                    {p.text}
-                  </span>
-                )
-              ) : null
-            )}
+            <div
+              className={
+                m.role === "user"
+                  ? "max-w-[80%] rounded-2xl rounded-br-md bg-primary px-4 py-3 text-sm text-primary-foreground"
+                  : "max-w-[90%] rounded-2xl rounded-bl-md bg-card px-4 py-3 text-sm shadow-sm ring-1 ring-border"
+              }
+            >
+              {m.parts.map((p, i) =>
+                p.type === "text" ? (
+                  m.role === "assistant" ? (
+                    <AssistantMessage key={i} text={p.text} files={files} />
+                  ) : (
+                    <span key={i} className="whitespace-pre-wrap">
+                      {p.text}
+                    </span>
+                  )
+                ) : null
+              )}
+            </div>
           </div>
         ))}
         {busy && messages.at(-1)?.role === "user" && (
-          <p className="text-xs text-muted-foreground">
-            Reading your materials…
-          </p>
+          <div className="max-w-[90%] rounded-2xl rounded-bl-md bg-card px-4 py-3 shadow-sm ring-1 ring-border">
+            <p className="text-xs text-muted-foreground">
+              Reading your materials…
+            </p>
+          </div>
         )}
       </div>
 
@@ -147,21 +157,25 @@ export function ChatClient({
           sendMessage({ text: input });
           setInput("");
         }}
-        className="sticky bottom-4 flex gap-2"
+        // Sticky sticks to the viewport edge, where the mobile tab bar lives —
+        // so clear its height below `lg` or the composer sits underneath it.
+        className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 -mx-5 border-t bg-background/85 px-5 py-3 backdrop-blur-sm sm:-mx-8 sm:px-8 lg:bottom-0"
       >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask anything from your materials…"
-          className="h-10 flex-1 rounded-lg border bg-card px-3.5 text-sm outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-ring/30"
-        />
-        <button
-          type="submit"
-          disabled={busy}
-          className="h-10 btn-squish rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
-        >
-          Ask
-        </button>
+        <div className="flex gap-2">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask anything from your materials…"
+            className="h-10 flex-1 rounded-lg border bg-card px-3.5 text-sm outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-ring/30"
+          />
+          <button
+            type="submit"
+            disabled={busy}
+            className="h-10 btn-squish rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+          >
+            Ask
+          </button>
+        </div>
       </form>
     </div>
   );

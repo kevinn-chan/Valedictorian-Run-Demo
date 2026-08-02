@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/ui-kit";
 import { ReviewClient } from "@/app/(app)/sessions/[id]/review/review-client";
 
 // Cross-session "due today": every card due right now, across all of this
@@ -34,17 +34,13 @@ export default async function DueTodayPage() {
   }));
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 py-12">
-      <Link
-        href="/"
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← Home
-      </Link>
-      <h1 className="mt-1 text-xl font-semibold tracking-tight">Due today</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Every card due across your sessions, in one queue.
-      </p>
+    <main className="mx-auto w-full max-w-2xl px-5 py-8 sm:px-8 lg:py-12">
+      <PageHeader
+        back="/"
+        backLabel="Dashboard"
+        title="Due today"
+        description="Every card due across your sessions, in one queue."
+      />
       <ReviewClient cards={cards} />
     </main>
   );

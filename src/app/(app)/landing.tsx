@@ -55,16 +55,16 @@ const STEPS = [
 
 export function Landing() {
   return (
-    <div className="min-h-screen bg-[#FFF7F8] text-rose-950">
+    <div className="min-h-screen bg-[#F7F8FF] text-indigo-950">
       <style>{`@keyframes vr-drift { 0%,100% { transform: translate(0,0) } 50% { transform: translate(14px,-18px) } }`}</style>
 
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
         <p className="text-sm font-semibold tracking-tight">
-          <span className="text-rose-600">●</span> Valedictorian Run
+          <span className="text-indigo-600">●</span> Valedictorian Run
         </p>
         <Link
           href="/login"
-          className="rounded-full bg-rose-600 px-4 py-2 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-rose-700 active:scale-95"
+          className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-indigo-700 active:scale-95"
         >
           Sign in
         </Link>
@@ -75,19 +75,19 @@ export function Landing() {
         <section className="relative mx-auto w-full max-w-5xl overflow-hidden px-6 pb-20 pt-16 text-center">
           <div
             aria-hidden
-            className="pointer-events-none absolute -left-10 top-10 size-48 rounded-[3rem] bg-rose-200/50 blur-2xl [animation:vr-drift_9s_ease-in-out_infinite]"
+            className="pointer-events-none absolute -left-10 top-10 size-48 rounded-[3rem] bg-indigo-200/50 blur-2xl [animation:vr-drift_9s_ease-in-out_infinite]"
           />
           <div
             aria-hidden
             className="pointer-events-none absolute -right-8 bottom-0 size-56 rounded-[4rem] bg-amber-200/40 blur-2xl [animation:vr-drift_11s_ease-in-out_infinite_reverse]"
           />
-          <p className="relative inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-600">
+          <p className="relative inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs font-medium text-indigo-600">
             <Sparkles className="size-3.5" />
             Private by design — built for exactly two students
           </p>
           <h1 className="relative mx-auto mt-6 max-w-2xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
             Your lecture PDFs,{" "}
-            <span className="relative whitespace-nowrap text-rose-600">
+            <span className="relative whitespace-nowrap text-indigo-600">
               reborn
               <svg
                 aria-hidden
@@ -98,7 +98,7 @@ export function Landing() {
                 <path
                   d="M2 6 C 30 2, 60 7, 118 3"
                   fill="none"
-                  stroke="#fda4af"
+                  stroke="#a5b4fc"
                   strokeWidth="3"
                   strokeLinecap="round"
                 />
@@ -106,7 +106,7 @@ export function Landing() {
             </span>{" "}
             as a study system
           </h1>
-          <p className="relative mx-auto mt-5 max-w-xl text-base leading-relaxed text-rose-900/70">
+          <p className="relative mx-auto mt-5 max-w-xl text-base leading-relaxed text-indigo-900/70">
             Drop in a semester of slides. Get a browsable wiki, cue cards, mock
             exams, a study plan — and answers that always show the page they
             came from.
@@ -114,13 +114,13 @@ export function Landing() {
           <div className="relative mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/login"
-              className="inline-block rounded-2xl bg-rose-600 px-7 py-3.5 text-base font-semibold text-white shadow-[0_10px_30px_-10px_rgba(225,29,72,0.6)] transition hover:-translate-y-0.5 hover:bg-rose-700 active:scale-95"
+              className="inline-block rounded-2xl bg-indigo-600 px-7 py-3.5 text-base font-semibold text-white shadow-[0_10px_30px_-10px_rgba(79,70,229,0.6)] transition hover:-translate-y-0.5 hover:bg-indigo-700 active:scale-95"
             >
               Start studying →
             </Link>
             <Link
               href="/demo"
-              className="inline-block rounded-2xl border border-rose-200 bg-white px-7 py-3.5 text-base font-semibold text-rose-600 transition hover:-translate-y-0.5 hover:border-rose-400 active:scale-95"
+              className="inline-block rounded-2xl border border-indigo-200 bg-white px-7 py-3.5 text-base font-semibold text-indigo-600 transition hover:-translate-y-0.5 hover:border-indigo-400 active:scale-95"
             >
               Try the live demo
             </Link>
@@ -136,13 +136,13 @@ export function Landing() {
             {STEPS.map(({ Icon, title, body }) => (
               <div
                 key={title}
-                className="rounded-3xl border border-rose-100 bg-white p-6 shadow-[0_10px_36px_-14px_rgba(190,18,60,0.2)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_44px_-14px_rgba(190,18,60,0.3)]"
+                className="rounded-3xl border border-indigo-100 bg-white p-6 shadow-[0_10px_36px_-14px_rgba(67,56,202,0.2)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_44px_-14px_rgba(67,56,202,0.3)]"
               >
-                <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-rose-100">
-                  <Icon className="size-5 text-rose-600" />
+                <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-indigo-100">
+                  <Icon className="size-5 text-indigo-600" />
                 </span>
                 <h3 className="mt-4 text-base font-semibold">{title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-rose-900/70">
+                <p className="mt-1.5 text-sm leading-relaxed text-indigo-900/70">
                   {body}
                 </p>
               </div>
@@ -155,29 +155,29 @@ export function Landing() {
           <h2 className="text-center text-2xl font-semibold tracking-tight">
             Don&apos;t take our word for it — poke it
           </h2>
-          <p className="mx-auto mt-2 max-w-md text-center text-sm text-rose-900/70">
+          <p className="mx-auto mt-2 max-w-md text-center text-sm text-indigo-900/70">
             These are real artifacts from a real Computer Networks deck,
             compiled by the app.
           </p>
           <div className="mt-8 grid gap-5 sm:grid-cols-3">
             <FlipCard />
             <MiniQuiz />
-            <div className="flex h-56 flex-col rounded-3xl border border-rose-200 bg-white p-6 shadow-[0_10px_36px_-12px_rgba(190,18,60,0.25)]">
-              <p className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-500">
+            <div className="flex h-56 flex-col rounded-3xl border border-indigo-200 bg-white p-6 shadow-[0_10px_36px_-12px_rgba(67,56,202,0.25)]">
+              <p className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-500">
                 <MessageCircleQuestion className="size-3.5" />
                 you ask
               </p>
-              <p className="mt-1 text-sm text-rose-950">
+              <p className="mt-1 text-sm text-indigo-950">
                 Why does Go-back-N discard out-of-order frames?
               </p>
-              <p className="mt-3 border-t border-rose-100 pt-3 text-sm leading-relaxed text-rose-900/80">
+              <p className="mt-3 border-t border-indigo-100 pt-3 text-sm leading-relaxed text-indigo-900/80">
                 The receiver only accepts frames in sequence, so anything after
                 a loss is resent from the error onward{" "}
-                <span className="inline-block rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700">
+                <span className="inline-block rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
                   slides p.14
                 </span>
               </p>
-              <p className="mt-auto text-xs text-rose-500">
+              <p className="mt-auto text-xs text-indigo-500">
                 every answer carries its receipt
               </p>
             </div>
@@ -186,7 +186,7 @@ export function Landing() {
 
         {/* Learning objectives */}
         <section className="mx-auto w-full max-w-3xl px-6 pb-20">
-          <div className="rounded-3xl border border-rose-100 bg-white p-8 shadow-[0_10px_36px_-14px_rgba(190,18,60,0.2)]">
+          <div className="rounded-3xl border border-indigo-100 bg-white p-8 shadow-[0_10px_36px_-14px_rgba(67,56,202,0.2)]">
             <h2 className="text-2xl font-semibold tracking-tight">
               By exam day, you will
             </h2>
@@ -196,10 +196,10 @@ export function Landing() {
                   <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-green-100">
                     <BadgeCheck className="size-4 text-green-700" />
                   </span>
-                  <span className="text-sm leading-relaxed text-rose-950">
+                  <span className="text-sm leading-relaxed text-indigo-950">
                     {text}
                   </span>
-                  <Icon className="ml-auto mt-1 size-4 shrink-0 text-rose-300" />
+                  <Icon className="ml-auto mt-1 size-4 shrink-0 text-indigo-300" />
                 </li>
               ))}
             </ul>
@@ -208,17 +208,17 @@ export function Landing() {
 
         {/* CTA */}
         <section className="mx-auto w-full max-w-5xl px-6 pb-24">
-          <div className="rounded-[2.5rem] bg-gradient-to-br from-rose-600 to-rose-500 px-8 py-14 text-center shadow-[0_20px_60px_-20px_rgba(225,29,72,0.55)]">
+          <div className="rounded-[2.5rem] bg-gradient-to-br from-indigo-600 to-indigo-500 px-8 py-14 text-center shadow-[0_20px_60px_-20px_rgba(79,70,229,0.55)]">
             <h2 className="text-3xl font-semibold tracking-tight text-white">
               Ready to run for valedictorian?
             </h2>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-rose-100">
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-indigo-100">
               Two seats, zero subscriptions. Your materials stay yours — they
               just learn to fight back.
             </p>
             <Link
               href="/login"
-              className="mt-7 inline-block rounded-2xl bg-white px-7 py-3.5 text-base font-semibold text-rose-600 transition hover:-translate-y-0.5 active:scale-95"
+              className="mt-7 inline-block rounded-2xl bg-white px-7 py-3.5 text-base font-semibold text-indigo-600 transition hover:-translate-y-0.5 active:scale-95"
             >
               Pick your profile →
             </Link>
@@ -226,7 +226,7 @@ export function Landing() {
         </section>
       </main>
 
-      <footer className="border-t border-rose-100 py-8 text-center text-xs text-rose-400">
+      <footer className="border-t border-indigo-100 py-8 text-center text-xs text-indigo-400">
         Valedictorian Run — a corpus-first study system for two.
       </footer>
     </div>

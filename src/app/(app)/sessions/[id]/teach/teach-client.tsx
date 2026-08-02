@@ -51,10 +51,10 @@ export function TeachClient({
 
   const scoreColor = (s: number) =>
     s >= 80
-      ? "text-green-600 dark:text-green-400"
+      ? "text-green-600"
       : s >= 50
-        ? "text-amber-600 dark:text-amber-400"
-        : "text-red-600 dark:text-red-400";
+        ? "text-amber-600"
+        : "text-red-600";
 
   return (
     <div className="mt-8 space-y-6">
@@ -119,7 +119,7 @@ export function TeachClient({
               <ul className="mt-2 space-y-1.5">
                 {grade.strengths.map((s, i) => (
                   <li key={i} className="flex gap-2 text-sm">
-                    <Check className="mt-0.5 size-4 shrink-0 text-green-600 dark:text-green-400" />
+                    <Check className="mt-0.5 size-4 shrink-0 text-green-600" />
                     <span>{s}</span>
                   </li>
                 ))}
@@ -133,7 +133,7 @@ export function TeachClient({
               <ul className="mt-2 space-y-2.5">
                 {grade.corrections.map((c, i) => (
                   <li key={i} className="flex gap-2 text-sm">
-                    <X className="mt-0.5 size-4 shrink-0 text-red-600 dark:text-red-400" />
+                    <X className="mt-0.5 size-4 shrink-0 text-red-600" />
                     <span>
                       <span className="text-muted-foreground line-through">
                         {c.claim}
@@ -155,7 +155,7 @@ export function TeachClient({
               <ul className="mt-2 space-y-1.5">
                 {grade.missing.map((m, i) => (
                   <li key={i} className="flex gap-2 text-sm">
-                    <Circle className="mt-1 size-3 shrink-0 text-amber-600 dark:text-amber-400" />
+                    <Circle className="mt-1 size-3 shrink-0 text-amber-600" />
                     <span>
                       {m.point}{" "}
                       <span className="text-xs text-muted-foreground">

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   BookOpen,
   CalendarRange,
+  EyeOff,
   GraduationCap,
   Layers,
   MessageCircleQuestion,
@@ -15,12 +16,13 @@ import { CompileButton } from "./compile-button";
 import { CardsButton } from "./cards-button";
 import { StatusPoller } from "./status-poller";
 import { RenameTitle } from "./rename-title";
+import { ProgressBar, ProgressRing } from "@/components/ui-kit";
 
 const CHIP: Record<string, string> = {
-  pending: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  processing: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
-  done: "bg-green-500/15 text-green-700 dark:text-green-300",
-  error: "bg-red-500/15 text-red-700 dark:text-red-300",
+  pending: "bg-amber-500/15 text-amber-700",
+  processing: "bg-blue-500/15 text-blue-700",
+  done: "bg-emerald-500/15 text-emerald-700",
+  error: "bg-red-500/15 text-red-700",
 };
 
 function formatBytes(n: number | null) {
@@ -46,6 +48,7 @@ export default async function SessionPage({
     { count: dueCount },
     { data: topicPages },
     { data: topicCards },
+    { count: figureCount },
   ] = await Promise.all([
     supabase.from("sessions").select("id, title").eq("id", id).single(),
     supabase
@@ -68,162 +71,301 @@ export default async function SessionPage({
       .from("cards")
       .select("topic_slug, reps, lapses")
       .eq("session_id", id),
+    supabase
+      .from("figures")
+      .select("*", { count: "exact", head: true })
+      .eq("session_id", id),
   ]);
   if (!session) notFound();
 
   // Total card count is just the rows we already fetched — no extra query.
-  const cardCount = topicCards?.length ?? 0;
+  const cards = topicCards ?? [];
+  const cardCount = cards.length;
+  const mastered = cards.filter((c) => c.reps >= 2).length;
+  const masteryPct = cardCount ? mastered / cardCount : 0;
+  const topicCount = topicPages?.length ?? 0;
+  const pageCount = (files ?? []).reduce((n, f) => n + (f.pages ?? 0), 0);
 
   const compiled = files?.some((f) => f.ingest_status === "done");
   const compiling = files?.some(
     (f) => f.ingest_status === "pending" || f.ingest_status === "processing"
   );
 
-  const tabs = [
-    { href: "wiki", label: "Corpus wiki", Icon: BookOpen },
-    { href: "plan", label: "Learning plan", Icon: CalendarRange },
-    ...((cardCount ?? 0) > 0
-      ? [
-          {
-            href: "review",
-            label: dueCount ? `Review · ${dueCount} due` : "Review",
-            Icon: Layers,
-          },
-        ]
-      : []),
-    { href: "chat", label: "Ask", Icon: MessageCircleQuestion },
-    { href: "teach", label: "Teach back", Icon: Presentation },
-    { href: "quiz", label: "Mock exam", Icon: GraduationCap },
-    ...((cardCount ?? 0) > 0
-      ? [{ href: "analytics", label: "Progress", Icon: TrendingUp }]
-      : []),
+  const base = `/sessions/${session.id}`;
+  const tabGroups = [
+    {
+      label: "Study",
+      tabs: [
+        {
+          href: "wiki",
+          label: "Wiki",
+          sub: `${topicCount} topic${topicCount === 1 ? "" : "s"}`,
+          Icon: BookOpen,
+        },
+        ...(cardCount > 0
+          ? [
+              {
+                href: "review",
+                label: "Review",
+                sub: dueCount ? `${dueCount} due now` : "All caught up",
+                Icon: Layers,
+                hot: (dueCount ?? 0) > 0,
+              },
+            ]
+          : []),
+        {
+          href: "chat",
+          label: "Ask",
+          sub: "Cited answers",
+          Icon: MessageCircleQuestion,
+        },
+      ],
+    },
+    {
+      label: "Practice",
+      tabs: [
+        {
+          href: "teach",
+          label: "Teach back",
+          sub: "Explain from memory",
+          Icon: Presentation,
+        },
+        {
+          href: "quiz",
+          label: "Mock exam",
+          sub: "10 questions",
+          Icon: GraduationCap,
+        },
+        ...((figureCount ?? 0) > 0
+          ? [
+              {
+                href: "occlude",
+                label: "Occlusion",
+                sub: `${figureCount} figure${figureCount === 1 ? "" : "s"}`,
+                Icon: EyeOff,
+              },
+            ]
+          : []),
+      ],
+    },
+    {
+      label: "Track",
+      tabs: [
+        {
+          href: "plan",
+          label: "Learning plan",
+          sub: "Dated schedule",
+          Icon: CalendarRange,
+        },
+        ...(cardCount > 0
+          ? [
+              {
+                href: "analytics",
+                label: "Progress",
+                sub: `${Math.round(masteryPct * 100)}% mastered`,
+                Icon: TrendingUp,
+              },
+            ]
+          : []),
+      ],
+    },
   ];
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
+    <main className="mx-auto w-full max-w-[1180px] px-5 py-8 sm:px-8 lg:py-10">
       {compiling && <StatusPoller />}
       <Link
         href="/"
-        className="text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
-        ← All sessions
+        <span aria-hidden>←</span> All sessions
       </Link>
-      <RenameTitle id={session.id} title={session.title} />
+
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-6">
+        <div className="min-w-0">
+          <RenameTitle id={session.id} title={session.title} />
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {files?.length ?? 0} file{files?.length === 1 ? "" : "s"}
+            {pageCount > 0 && ` · ${pageCount} pages`}
+            {topicCount > 0 && ` · ${topicCount} topics`}
+            {cardCount > 0 && ` · ${cardCount} cards`}
+          </p>
+        </div>
+
+        {compiled && cardCount > 0 && (
+          <div className="flex items-center gap-4 rounded-2xl border bg-card px-5 py-3">
+            <ProgressRing value={masteryPct} size={56} stroke={6}>
+              <span className="text-xs font-semibold tabular-nums">
+                {Math.round(masteryPct * 100)}%
+              </span>
+            </ProgressRing>
+            <div>
+              <p className="text-sm font-semibold">
+                {mastered} of {cardCount} mastered
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {dueCount ? `${dueCount} due for review` : "Nothing due today"}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {compiled && (
-        <nav className="mt-5 flex flex-wrap gap-1.5">
-          {tabs.map(({ href, label, Icon }) => (
-            <Link
-              key={href}
-              href={`/sessions/${session.id}/${href}`}
-              className="group inline-flex items-center gap-1.5 btn-squish rounded-full border bg-card px-3.5 py-1.5 text-sm font-medium shadow-sm hover:border-primary/40 hover:text-primary"
-            >
-              <Icon className="size-3.5 text-muted-foreground transition group-hover:text-primary" />
-              {label}
-            </Link>
-          ))}
-        </nav>
-      )}
-
-      <section className="mt-8 card-soft overflow-hidden">
-        <div className="flex items-center justify-between border-b px-5 py-3">
-          <h2 className="text-sm font-medium">Materials</h2>
-          {compiled && (
-            <CardsButton
-              sessionId={session.id}
-              hasCards={(cardCount ?? 0) > 0}
-            />
-          )}
-        </div>
-        <div className="p-5">
-          <Uploader sessionId={session.id} />
-        </div>
-        {files && files.length > 0 && (
-          <ul className="border-t">
-            {files.map((f) => (
-              <li
-                key={f.id}
-                className="flex items-center gap-3 border-b px-5 py-3 last:border-b-0"
-              >
-                {f.ingest_status === "done" ? (
+        <div className="mt-8 space-y-6">
+          {tabGroups.map((group) => (
+            <div key={group.label}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                {group.label}
+              </p>
+              <div className="mt-2.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {group.tabs.map(({ href, label, sub, Icon, hot }) => (
                   <Link
-                    href={`/sessions/${session.id}/wiki/${f.id.slice(0, 8)}-digest`}
-                    title="Open this file's digest"
-                    className="min-w-0 flex-1 truncate text-sm hover:text-primary"
+                    key={href}
+                    href={`${base}/${href}`}
+                    className={`group flex items-center gap-3.5 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] ${
+                      hot
+                        ? "border-primary/25 bg-primary/8"
+                        : "border-border bg-card"
+                    }`}
                   >
-                    {f.name}
+                    <span
+                      className={`flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                        hot
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-primary group-hover:bg-primary group-hover:text-primary-foreground"
+                      }`}
+                    >
+                      <Icon className="size-[18px]" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold">
+                        {label}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {sub}
+                      </span>
+                    </span>
                   </Link>
-                ) : (
-                  <span className="min-w-0 flex-1 truncate text-sm">
-                    {f.name}
-                  </span>
-                )}
-                {f.pages && (
-                  <span className="text-xs text-muted-foreground">
-                    {f.pages} pages
-                  </span>
-                )}
-                <span className="text-xs text-muted-foreground">
-                  {formatBytes(f.bytes)}
-                </span>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    CHIP[f.ingest_status] ?? CHIP.pending
-                  }`}
-                >
-                  {f.ingest_status}
-                </span>
-                {(f.ingest_status === "pending" ||
-                  f.ingest_status === "error") && (
-                  <CompileButton fileId={f.id} />
-                )}
-                {f.ingest_status === "done" && (
-                  <CompileButton fileId={f.id} recompile />
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {topicPages && topicCards && topicCards.length > 0 && (
-        <section className="mt-6 card-soft p-5">
-          <h2 className="text-sm font-medium">Mastery by topic</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            From your review history — open a topic to revisit its notes.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {topicPages.map((t) => {
-              const cs = topicCards.filter((c) => c.topic_slug === t.slug);
-              if (!cs.length) return null;
-              const reviewed = cs.some((c) => c.reps > 0 || c.lapses > 0);
-              const score = cs.filter((c) => c.reps >= 2).length / cs.length;
-              const cls = !reviewed
-                ? "bg-secondary text-muted-foreground"
-                : score < 0.4
-                  ? "bg-red-500/15 text-red-700 dark:text-red-300"
-                  : score < 0.8
-                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-                    : "bg-green-500/15 text-green-700 dark:text-green-300";
-              return (
-                <Link
-                  key={t.slug}
-                  href={`/sessions/${session.id}/wiki/${t.slug}`}
-                  title={
-                    reviewed
-                      ? `${Math.round(score * 100)}% mastered`
-                      : "Not reviewed yet"
-                  }
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition hover:opacity-80 ${cls}`}
-                >
-                  {t.title}
-                  {reviewed && ` · ${Math.round(score * 100)}%`}
-                </Link>
-              );
-            })}
-          </div>
-        </section>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
+
+      <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <section
+          className="overflow-hidden rounded-2xl border bg-card"
+          style={{ boxShadow: "var(--shadow-soft)" }}
+        >
+          <div className="flex items-center justify-between gap-3 border-b px-5 py-3.5">
+            <h2 className="text-sm font-semibold">Materials</h2>
+            {compiled && (
+              <CardsButton sessionId={session.id} hasCards={cardCount > 0} />
+            )}
+          </div>
+          <div className="p-5">
+            <Uploader sessionId={session.id} />
+          </div>
+          {files && files.length > 0 && (
+            <ul className="border-t">
+              {files.map((f) => (
+                <li
+                  key={f.id}
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
+                >
+                  {f.ingest_status === "done" ? (
+                    <Link
+                      href={`${base}/wiki/${f.id.slice(0, 8)}-digest`}
+                      title="Open this file's digest"
+                      className="min-w-0 flex-1 basis-full truncate text-sm font-medium hover:text-primary sm:basis-auto"
+                    >
+                      {f.name}
+                    </Link>
+                  ) : (
+                    <span className="min-w-0 flex-1 basis-full truncate text-sm font-medium sm:basis-auto">
+                      {f.name}
+                    </span>
+                  )}
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {f.pages ? `${f.pages} pages` : ""}
+                  </span>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {formatBytes(f.bytes)}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      CHIP[f.ingest_status] ?? CHIP.pending
+                    }`}
+                  >
+                    {f.ingest_status}
+                  </span>
+                  {(f.ingest_status === "pending" ||
+                    f.ingest_status === "error") && (
+                    <CompileButton fileId={f.id} />
+                  )}
+                  {f.ingest_status === "done" && (
+                    <CompileButton fileId={f.id} recompile />
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {topicPages && cardCount > 0 && (
+          <aside
+            className="rounded-2xl border bg-card p-5"
+            style={{ boxShadow: "var(--shadow-soft)" }}
+          >
+            <h2 className="text-sm font-semibold">Topic mastery</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              From your review history — open one to revisit its notes.
+            </p>
+            <ul className="mt-4 space-y-3">
+              {topicPages
+                .map((t) => {
+                  const cs = cards.filter((c) => c.topic_slug === t.slug);
+                  return { ...t, cs, score: cs.filter((c) => c.reps >= 2).length };
+                })
+                .filter((t) => t.cs.length > 0)
+                .sort((a, b) => a.score / a.cs.length - b.score / b.cs.length)
+                .slice(0, 8)
+                .map((t) => {
+                  const pct = t.score / t.cs.length;
+                  return (
+                    <li key={t.slug}>
+                      <Link
+                        href={`${base}/wiki/${t.slug}`}
+                        prefetch={false}
+                        className="group block"
+                      >
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="min-w-0 flex-1 truncate text-sm transition-colors group-hover:text-primary">
+                            {t.title}
+                          </span>
+                          <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+                            {Math.round(pct * 100)}%
+                          </span>
+                        </div>
+                        <ProgressBar value={pct} className="mt-1.5" />
+                      </Link>
+                    </li>
+                  );
+                })}
+            </ul>
+            {topicCount > 8 && (
+              <Link
+                href={`${base}/analytics`}
+                className="mt-4 block rounded-xl bg-secondary py-2 text-center text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent"
+              >
+                See all {topicCount} topics
+              </Link>
+            )}
+          </aside>
+        )}
+      </div>
     </main>
   );
 }

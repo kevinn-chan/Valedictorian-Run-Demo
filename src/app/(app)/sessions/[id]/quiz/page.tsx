@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/ui-kit";
 import { QuizClient } from "./quiz-client";
 
 export default async function QuizPage({
@@ -25,14 +25,12 @@ export default async function QuizPage({
   if (!session) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 py-12">
-      <Link
-        href={`/sessions/${id}`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← {session.title}
-      </Link>
-      <h1 className="mt-1 text-xl font-semibold tracking-tight">Mock exam</h1>
+    <main className="mx-auto w-full max-w-2xl px-5 py-8 sm:px-8 lg:py-12">
+      <PageHeader
+        back={`/sessions/${id}`}
+        backLabel={session.title}
+        title="Mock exam"
+      />
       <QuizClient sessionId={id} history={history ?? []} />
     </main>
   );

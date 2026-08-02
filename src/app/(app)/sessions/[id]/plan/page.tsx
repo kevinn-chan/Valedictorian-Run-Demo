@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/ui-kit";
 import { PlanForm } from "./plan-form";
 
 export default async function PlanPage({
@@ -28,18 +28,15 @@ export default async function PlanPage({
     .maybeSingle();
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-12">
-      <Link
-        href={`/sessions/${id}`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← {session.title}
-      </Link>
-      <h1 className="mt-1 text-xl font-semibold tracking-tight">
-        Learning plan
-      </h1>
+    <main className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 lg:py-12">
+      <PageHeader
+        back={`/sessions/${id}`}
+        backLabel={session.title}
+        title="Learning plan"
+        description="A dated schedule built only from topics that exist in your corpus."
+      />
 
-      <div className="mt-6">
+      <div>
         <PlanForm
           sessionId={id}
           initialGoal={session.goal_text ?? ""}
@@ -49,7 +46,10 @@ export default async function PlanPage({
       </div>
 
       {plan ? (
-        <article className="prose mt-10 max-w-none text-sm leading-relaxed dark:prose-invert [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_li]:my-1">
+        <article
+          className="prose mt-8 max-w-none rounded-2xl border bg-card p-6 text-sm leading-relaxed sm:p-8 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_li]:my-1"
+          style={{ boxShadow: "var(--shadow-soft)" }}
+        >
           <ReactMarkdown>{plan.markdown}</ReactMarkdown>
         </article>
       ) : (

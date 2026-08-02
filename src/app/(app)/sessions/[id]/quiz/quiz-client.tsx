@@ -62,7 +62,7 @@ export function QuizClient({
         <button
           onClick={start}
           disabled={busy}
-          className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+          className="btn-squish mt-4 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
         >
           {busy ? "Writing your exam…" : "Start mock exam"}
         </button>
@@ -86,7 +86,7 @@ export function QuizClient({
                     {h.score}/{h.total}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(h.taken_at).toLocaleDateString(undefined, {
+                    {new Date(h.taken_at).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                     })}
@@ -105,9 +105,20 @@ export function QuizClient({
 
   return (
     <div className="mt-8 space-y-8">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>Question {Math.min(Object.keys(picked).length + 1, questions.length)} of {questions.length}</span>
+        <span>{Object.keys(picked).length} answered</span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+        <div
+          className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+          style={{ width: `${(Object.keys(picked).length / questions.length) * 100}%` }}
+        />
+      </div>
+
       {submitted && (
-        <div className="rounded-lg border p-4 text-sm">
-          <span className="font-semibold">
+        <div className="rounded-xl border p-5 text-sm">
+          <span className="text-2xl font-bold">
             {score}/{questions.length}
           </span>{" "}
           — {score >= 8 ? "exam-ready on this material." : score >= 5 ? "solid — review the misses below." : "worth another pass through the wiki before exam day."}
@@ -169,7 +180,7 @@ export function QuizClient({
             );
           }}
           disabled={!allAnswered}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40"
+          className="btn-squish rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-40"
         >
           {allAnswered
             ? "Submit"

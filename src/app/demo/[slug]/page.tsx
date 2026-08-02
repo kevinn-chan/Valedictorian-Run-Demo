@@ -32,14 +32,14 @@ export default async function DemoWikiPage({
   const pages = (page.source_refs as { pages?: number[] } | null)?.pages;
 
   return (
-    <div className="min-h-screen bg-[#FFF7F8] text-rose-950">
+    <div className="min-h-screen bg-[#F7F8FF] text-indigo-950">
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-5">
         <Link href="/" className="text-sm font-semibold tracking-tight">
-          <span className="text-rose-600">●</span> Valedictorian Run
+          <span className="text-indigo-600">●</span> Valedictorian Run
         </Link>
         <Link
           href="/demo"
-          className="rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-medium text-rose-700 transition hover:-translate-y-0.5 hover:border-rose-400 active:scale-95"
+          className="rounded-full border border-indigo-200 bg-white px-4 py-2 text-sm font-medium text-indigo-700 transition hover:-translate-y-0.5 hover:border-indigo-400 active:scale-95"
         >
           ← Back to demo
         </Link>
@@ -48,7 +48,7 @@ export default async function DemoWikiPage({
       <main className="mx-auto w-full max-w-3xl px-6 pb-24">
         <Link
           href="/demo"
-          className="text-sm text-rose-900/50 transition hover:text-rose-700"
+          className="text-sm text-indigo-900/50 transition hover:text-indigo-700"
         >
           ← Sample course
         </Link>
@@ -56,7 +56,7 @@ export default async function DemoWikiPage({
           {page.title}
         </h1>
         {pages && pages.length > 0 && (
-          <p className="mt-1 text-xs text-rose-900/50">
+          <p className="mt-1 text-xs text-indigo-900/50">
             pages {Math.min(...pages)}–{Math.max(...pages)}
           </p>
         )}
@@ -66,14 +66,14 @@ export default async function DemoWikiPage({
 
         {figures && figures.length > 0 && (
           <section className="mt-10">
-            <h2 className="text-sm font-semibold text-rose-900/60">
+            <h2 className="text-sm font-semibold text-indigo-900/60">
               Figures from the source
             </h2>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
               {figures.map((f) => (
                 <figure
                   key={f.id}
-                  className="overflow-hidden rounded-xl border border-rose-200 bg-white"
+                  className="overflow-hidden rounded-xl border border-indigo-200 bg-white"
                 >
                   <a
                     href={`/api/figure/${f.id}`}
@@ -89,7 +89,7 @@ export default async function DemoWikiPage({
                       className="max-h-96 w-full bg-white object-contain"
                     />
                   </a>
-                  <figcaption className="px-3 py-2 text-xs text-rose-900/50">
+                  <figcaption className="px-3 py-2 text-xs text-indigo-900/50">
                     {f.caption ? `${f.caption} · ` : ""}p.{f.page}
                   </figcaption>
                 </figure>

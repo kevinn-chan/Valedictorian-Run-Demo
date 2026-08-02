@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/ui-kit";
 import { TeachClient } from "./teach-client";
 
 export default async function TeachPage({
@@ -26,18 +26,13 @@ export default async function TeachPage({
     .order("title");
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <Link
-        href={`/sessions/${id}`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← {session.title}
-      </Link>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight">Teach back</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        The fastest way to find gaps: explain a topic from memory and get
-        graded against your own materials, page-cited.
-      </p>
+    <main className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 lg:py-10">
+      <PageHeader
+        back={`/sessions/${id}`}
+        backLabel={session.title}
+        title="Teach back"
+        description="The fastest way to find gaps: explain a topic from memory and get graded against your own materials, page-cited."
+      />
       {topics?.length ? (
         <TeachClient sessionId={id} topics={topics} />
       ) : (
