@@ -194,6 +194,24 @@ export default async function SessionPage({
           <div className="mt-3">
             <ExamCountdown sessionId={session.id} examDate={session.exam_date} />
           </div>
+          {compiled && (
+            <p className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+              <a
+                href={`/api/export/${session.id}/wiki`}
+                className="transition-colors hover:text-foreground"
+              >
+                Export wiki
+              </a>
+              {cardCount > 0 && (
+                <a
+                  href={`/api/export/${session.id}/cards`}
+                  className="transition-colors hover:text-foreground"
+                >
+                  Export cards
+                </a>
+              )}
+            </p>
+          )}
         </div>
 
         {compiled && cardCount > 0 && (
