@@ -67,7 +67,7 @@ const CompileSchema = z.object({
       })
     )
     .describe(
-      "Pages that contain a meaningful figure worth keeping as an image — anatomy diagrams, graphs, charts, labelled illustrations. Skip decorative logos, title pages, and text-only pages. Empty array if the document is entirely text."
+      "Pages that contain a figure worth keeping as an image — anatomy diagrams, graphs, charts, labelled illustrations, simple diagrams, supporting tables, screenshots (e.g. of code or software UI), and any visual a student would want to see again while reviewing. It does not have to be complex or elaborate. Skip decorative logos, title pages, and text-only pages. Empty array if the document is entirely text."
     ),
 });
 
@@ -80,7 +80,7 @@ const COMPILE_PROMPT = `You are compiling a student's course file into a corpus 
    - "## Watch out" — misconceptions, edge cases, and likely exam traps grounded in the source
    - cite pages inline like (p. 12) throughout
 3. "digest": a markdown study digest of the entire file: what it covers, how the topics build on each other, and what to master first.
-4. "figures": list the pages that contain a real figure worth keeping as an image — anatomy diagrams, graphs, charts, labelled illustrations. Give each a one-line caption and, where possible, the slug of the topic it illustrates. Skip decorative logos, title pages, and text-only pages.
+4. "figures": list the pages that contain a figure worth keeping as an image — anatomy diagrams, graphs, charts, labelled illustrations, simple diagrams, supporting tables, screenshots (e.g. of code or software UI), and any visual a student would want to see again while reviewing; it does not have to be complex or elaborate. Give each a one-line caption and, where possible, the slug of the topic it illustrates. Skip decorative logos, title pages, and text-only pages.
 Write formulas in plain text/Unicode (e.g. U = 1/(1+2a), W = 2^(k-1)) — never LaTeX delimiters like $...$.
 Do not invent content that is not in the document.`;
 
