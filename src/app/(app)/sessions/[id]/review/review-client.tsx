@@ -193,7 +193,7 @@ export function ReviewClient({
               .map((s) => (
                 <div
                   key={s.cardId}
-                  className="absolute rounded bg-primary/60"
+                  className="absolute rounded bg-primary"
                   style={{
                     left: `${s.rect.x * 100}%`,
                     top: `${s.rect.y * 100}%`,
