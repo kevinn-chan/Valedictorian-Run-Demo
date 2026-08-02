@@ -28,6 +28,7 @@ export function Sidebar({
       <div className="flex h-16 items-center px-6">
         <Link
           href="/"
+          prefetch={false}
           className="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight"
         >
           <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -128,6 +129,7 @@ export function MobileBar({ dueCount }: { dueCount: number }) {
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-background/85 px-5 backdrop-blur-sm lg:hidden">
         <Link
           href="/"
+          prefetch={false}
           className="flex items-center gap-2 text-sm font-semibold tracking-tight"
         >
           <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">

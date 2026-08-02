@@ -44,6 +44,7 @@ export function WikiNav({
       {prev ? (
         <Link
           href={`/sessions/${sessionId}/wiki/${prev.slug}`}
+          prefetch={false}
           className="card-lift group flex flex-1 items-center gap-2 rounded-xl border bg-card px-4 py-3"
         >
           <ChevronLeft className="size-4 shrink-0 text-muted-foreground transition group-hover:text-primary" />
@@ -60,6 +61,7 @@ export function WikiNav({
       {next ? (
         <Link
           href={`/sessions/${sessionId}/wiki/${next.slug}`}
+          prefetch={false}
           className="card-lift group flex flex-1 items-center justify-end gap-2 rounded-xl border bg-card px-4 py-3 text-right"
         >
           <span className="min-w-0">

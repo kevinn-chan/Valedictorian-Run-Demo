@@ -132,6 +132,7 @@ export default async function SearchPage({
             <div className="flex items-center justify-between bg-secondary/40 px-5 py-3">
               <Link
                 href={`/sessions/${sid}`}
+                prefetch={false}
                 className="text-sm font-medium hover:text-primary"
               >
                 {g.title}

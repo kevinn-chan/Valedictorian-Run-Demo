@@ -227,6 +227,7 @@ export default async function SessionPage({
                   <Link
                     key={href}
                     href={`${base}/${href}`}
+                    prefetch={false}
                     className={`group flex items-center gap-3.5 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] ${
                       hot
                         ? "border-primary/25 bg-primary/8"
@@ -282,6 +283,7 @@ export default async function SessionPage({
                   {f.ingest_status === "done" ? (
                     <Link
                       href={`${base}/wiki/${f.id.slice(0, 8)}-digest`}
+                      prefetch={false}
                       title="Open this file's digest"
                       className="min-w-0 flex-1 basis-full truncate text-sm font-medium hover:text-primary sm:basis-auto"
                     >

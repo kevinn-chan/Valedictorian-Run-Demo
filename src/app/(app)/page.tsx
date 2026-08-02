@@ -203,6 +203,7 @@ export default async function Home() {
                       <div className="min-w-0 flex-1">
                         <Link
                           href={`/sessions/${s.id}`}
+                          prefetch={false}
                           className="text-[15px] font-semibold leading-snug tracking-tight after:absolute after:inset-0 hover:text-primary"
                         >
                           {s.title}
