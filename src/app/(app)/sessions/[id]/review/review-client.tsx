@@ -39,6 +39,11 @@ export function ReviewClient({
   const [queue, setQueue] = useState(cards);
   const [flipped, setFlipped] = useState(false);
   const [reviewed, setReviewed] = useState(0);
+  const [lastGraded, setLastGraded] = useState<{
+    card: Card;
+    grade: "again" | "good" | "easy";
+    prev: { interval_days: number; ease: number; reps: number; lapses: number; due_at: string };
+  } | null>(null);
   const card = queue[0];
 
   const grade = useCallback(
@@ -46,16 +51,38 @@ export function ReviewClient({
       if (!card || !flipped) return;
       setFlipped(false);
       setReviewed((n) => n + 1);
-      // "again" puts the card back at the end of this session's queue
       setQueue((q) => (g === "again" ? [...q.slice(1), card] : q.slice(1)));
-      fetch("/api/review", {
+      const res = await fetch("/api/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cardId: card.id, grade: g }),
       });
+      const data = await res.json();
+      if (data.prev) {
+        setLastGraded({ card, grade: g, prev: data.prev });
+      }
     },
     [card, flipped]
   );
+
+  const undo = useCallback(async () => {
+    if (!lastGraded) return;
+    const { card: undoneCard, grade: undoneGrade, prev } = lastGraded;
+    setLastGraded(null);
+    setFlipped(false);
+    setReviewed((n) => Math.max(0, n - 1));
+    // Put card back at the front; if it was "again" it's also at the end — remove that copy
+    setQueue((q) =>
+      undoneGrade === "again"
+        ? [undoneCard, ...q.filter((c) => c.id !== undoneCard.id)]
+        : [undoneCard, ...q]
+    );
+    fetch("/api/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "undo", cardId: undoneCard.id, prev }),
+    });
+  }, [lastGraded]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -65,10 +92,11 @@ export function ReviewClient({
       } else if (e.key === "1") grade("again");
       else if (e.key === "2") grade("good");
       else if (e.key === "3") grade("easy");
+      else if (e.key === "u" || e.key === "U") undo();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [grade]);
+  }, [grade, undo]);
 
   const total = reviewed + queue.length;
 
@@ -199,13 +227,27 @@ export function ReviewClient({
         </div>
       ) : (
         // Same height as the grade row so revealing never shifts the layout.
-        <p className="mt-3 flex h-[42px] items-center justify-center text-xs text-muted-foreground">
-          tap the card or press{" "}
-          <kbd className="mx-1 rounded border bg-secondary px-1.5 py-0.5 font-sans text-[11px] font-medium">
-            space
-          </kbd>{" "}
-          to reveal
-        </p>
+        <div className="mt-3 flex h-[42px] items-center justify-center">
+          {lastGraded ? (
+            <button
+              onClick={undo}
+              className="btn-squish rounded-lg border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
+            >
+              Undo{" "}
+              <kbd className="ml-1 rounded border bg-secondary px-1 py-0.5 font-sans text-[10px]">
+                u
+              </kbd>
+            </button>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              tap the card or press{" "}
+              <kbd className="mx-1 rounded border bg-secondary px-1.5 py-0.5 font-sans text-[11px] font-medium">
+                space
+              </kbd>{" "}
+              to reveal
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
