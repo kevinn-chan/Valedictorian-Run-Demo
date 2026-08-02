@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { schedule, type Grade } from "@/lib/srs";
@@ -44,7 +44,29 @@ export function ReviewClient({
     grade: "again" | "good" | "easy";
     prev: { interval_days: number; ease: number; reps: number; lapses: number; due_at: string };
   } | null>(null);
+  // Hide-all-but-one: cache sibling occlusion rects per figure
+  const siblingCache = useRef<Record<string, { cardId: string; rect: { x: number; y: number; w: number; h: number } }[]>>({});
+  const [siblings, setSiblings] = useState<{ cardId: string; rect: { x: number; y: number; w: number; h: number } }[]>([]);
   const card = queue[0];
+
+  useEffect(() => {
+    if (!card?.source_ref || card.source_ref.kind !== "occlusion" || !card.source_ref.figureId) {
+      setSiblings([]);
+      return;
+    }
+    const fid = card.source_ref.figureId;
+    if (siblingCache.current[fid]) {
+      setSiblings(siblingCache.current[fid]);
+      return;
+    }
+    fetch(`/api/occlusion-siblings?figureId=${fid}`)
+      .then((r) => r.json())
+      .then((d) => {
+        siblingCache.current[fid] = d.rects ?? [];
+        setSiblings(d.rects ?? []);
+      })
+      .catch(() => setSiblings([]));
+  }, [card]);
 
   const grade = useCallback(
     async (g: "again" | "good" | "easy") => {
@@ -158,8 +180,6 @@ export function ReviewClient({
         {card.source_ref?.kind === "occlusion" &&
         card.source_ref.figureId &&
         card.source_ref.rect ? (
-          // The masked region covers the label until you flip; then it turns into
-          // a ring so you can check the answer against the revealed figure.
           <div className="relative mt-4 inline-block">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -167,6 +187,22 @@ export function ReviewClient({
               alt="occlusion figure"
               className="max-h-[50vh] w-auto rounded-lg border"
             />
+            {/* Hide-all-but-one: mask every sibling region so adjacent labels can't be read */}
+            {siblings
+              .filter((s) => s.cardId !== card.id)
+              .map((s) => (
+                <div
+                  key={s.cardId}
+                  className="absolute rounded bg-primary/60"
+                  style={{
+                    left: `${s.rect.x * 100}%`,
+                    top: `${s.rect.y * 100}%`,
+                    width: `${s.rect.w * 100}%`,
+                    height: `${s.rect.h * 100}%`,
+                  }}
+                />
+              ))}
+            {/* The tested region: solid mask → ring on flip */}
             <div
               className={`absolute rounded ${
                 flipped ? "ring-2 ring-primary" : "bg-primary"
