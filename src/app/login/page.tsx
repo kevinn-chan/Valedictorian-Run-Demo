@@ -18,7 +18,12 @@ export default async function LoginPage({
           <span aria-hidden>●</span> Valedictorian Run
         </p>
 
-        <LoginForm profiles={profiles} hadError={!!error} />
+        {/* Names only — the type says {name} but RSC serializes whatever it's
+            given, so map the emails off before they cross to the client. */}
+        <LoginForm
+          profiles={profiles.map((p) => ({ name: p.name }))}
+          hadError={!!error}
+        />
 
         {profiles.length === 0 && (
           <p className="mt-6 text-sm text-red-600">
