@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, LayoutGrid, Layers, LogOut, Search } from "lucide-react";
 import { NavLink } from "./nav-link";
+import { ProfileSwitcher } from "./profile-switcher";
 
 type SessionRow = { id: string; title: string; cards: number; due: number };
 
@@ -18,10 +19,12 @@ export function Sidebar({
   sessions,
   dueCount,
   profileName,
+  profiles,
 }: {
   sessions: SessionRow[];
   dueCount: number;
   profileName: string | null;
+  profiles: { name: string; index: number }[];
 }) {
   return (
     <aside className="sticky top-0 hidden h-dvh w-[264px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
@@ -102,7 +105,12 @@ export function Sidebar({
         )}
       </nav>
 
-      <div className="border-t border-sidebar-border p-3">
+      <div className="space-y-1 border-t border-sidebar-border p-3">
+        <ProfileSwitcher
+          profiles={profiles}
+          currentName={profileName}
+          className={`${ITEM} ${ITEM_IDLE} w-full text-left`}
+        />
         <form action="/auth/signout" method="post">
           <button
             type="submit"

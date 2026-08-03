@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { SHARED_PASSWORD_KEY } from "@/lib/shared-password";
+
 // Two-step sign-in: password first, then pick a profile — never both on screen
 // at once. The password stays in a controlled field and is submitted (as a hidden
 // input) together with the chosen profile index to /api/profile-login, so the
@@ -27,7 +29,17 @@ export function LoginForm({
           : "Pick your profile."}
       </p>
 
-      <form action="/api/profile-login" method="post" className="mt-8">
+      <form
+        action="/api/profile-login"
+        method="post"
+        className="mt-8"
+        // Hand the shared password to this tab so the sidebar can re-submit it
+        // for a one-click profile switch. sessionStorage (not localStorage) —
+        // it survives the redirect to "/" and dies with the tab.
+        onSubmit={() => {
+          if (password) sessionStorage.setItem(SHARED_PASSWORD_KEY, password);
+        }}
+      >
         {step === "password" ? (
           <>
             <input

@@ -13,7 +13,11 @@ export default async function AppLayout({
   if (!data?.claims) return <>{children}</>;
 
   const email = (data.claims.email as string | undefined)?.toLowerCase();
-  const profileName = getProfiles().find((p) => p.email === email)?.name ?? null;
+  const allProfiles = getProfiles();
+  const profileName = allProfiles.find((p) => p.email === email)?.name ?? null;
+  // Names + indices only — the rail's profile switcher needs to name the other
+  // profile and submit its index; emails never cross to the client.
+  const profiles = allProfiles.map((p, index) => ({ name: p.name, index }));
 
   // The rail needs the session list and per-session due dots. RLS scopes both
   // to the owner, so one grouped round-trip covers the whole shell.
@@ -43,6 +47,7 @@ export default async function AppLayout({
         sessions={rows}
         dueCount={dueCards?.length ?? 0}
         profileName={profileName}
+        profiles={profiles}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileBar dueCount={dueCards?.length ?? 0} />
