@@ -50,7 +50,7 @@ export default async function AppLayout({
         profiles={profiles}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <MobileBar dueCount={dueCards?.length ?? 0} />
+        <MobileBar dueCount={dueCards?.length ?? 0} profileName={profileName} profiles={profiles} />
         {/* Bottom padding clears the mobile tab bar; lg drops it. */}
         <div className="flex-1 pb-20 lg:pb-0">{children}</div>
       </div>

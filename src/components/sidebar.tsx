@@ -127,9 +127,17 @@ export function Sidebar({
   );
 }
 
-// Mobile: a compact top bar (brand + sign out) plus a bottom tab bar. No JS,
-// no drawer — three destinations don't need one.
-export function MobileBar({ dueCount }: { dueCount: number }) {
+// Mobile: a compact top bar (brand + sign out + profile switch) plus a bottom
+// tab bar. No JS, no drawer — three destinations don't need one.
+export function MobileBar({
+  dueCount,
+  profileName,
+  profiles,
+}: {
+  dueCount: number;
+  profileName?: string | null;
+  profiles?: { name: string; index: number }[];
+}) {
   const tab =
     "flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition-colors";
   return (
@@ -145,14 +153,23 @@ export function MobileBar({ dueCount }: { dueCount: number }) {
           </span>
           Valedictorian
         </Link>
-        <form action="/auth/signout" method="post">
-          <button
-            type="submit"
-            className="rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
-          >
-            Sign out
-          </button>
-        </form>
+        <div className="flex items-center gap-1">
+          {profiles && profiles.length > 0 && (
+            <ProfileSwitcher
+              profiles={profiles}
+              currentName={profileName ?? null}
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+            />
+          )}
+          <form action="/auth/signout" method="post">
+            <button
+              type="submit"
+              className="rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
       </header>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm lg:hidden">
