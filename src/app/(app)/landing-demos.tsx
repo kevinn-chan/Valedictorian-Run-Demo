@@ -17,22 +17,22 @@ export function FlipCard() {
           flipped ? "[transform:rotateY(180deg)]" : ""
         }`}
       >
-        <span className="absolute inset-0 flex flex-col justify-between rounded-3xl border border-indigo-200 bg-white p-6 text-left shadow-[0_10px_36px_-12px_rgba(67,56,202,0.25)] [backface-visibility:hidden]">
-          <span className="text-sm leading-relaxed text-indigo-950">
+        <span className="absolute inset-0 flex flex-col justify-between rounded-3xl border border-border bg-card p-6 text-left [backface-visibility:hidden]" style={{ boxShadow: "var(--shadow-soft)" }}>
+          <span className="text-sm leading-relaxed text-foreground">
             What are the two types of transmission errors at the Data Link
             Layer?
           </span>
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-500">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <RotateCw className="size-3.5 transition-transform duration-300 group-hover:rotate-45" />
             tap to flip
           </span>
         </span>
-        <span className="absolute inset-0 flex flex-col justify-between rounded-3xl bg-indigo-600 p-6 text-left shadow-[0_10px_36px_-12px_rgba(67,56,202,0.4)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
-          <span className="text-sm leading-relaxed text-white">
+        <span className="absolute inset-0 flex flex-col justify-between rounded-3xl bg-primary p-6 text-left [backface-visibility:hidden] [transform:rotateY(180deg)]" style={{ boxShadow: "var(--shadow-soft)" }}>
+          <span className="text-sm leading-relaxed text-primary-foreground">
             Lost frames — never arrive at all — and damaged frames, received
             with bits in error.
           </span>
-          <span className="text-xs font-medium text-indigo-200">
+          <span className="text-xs font-medium text-primary-foreground/70">
             straight from p. 2 of the deck
           </span>
         </span>
@@ -52,8 +52,8 @@ export function MiniQuiz() {
   const [picked, setPicked] = useState<number | null>(null);
   const done = picked !== null;
   return (
-    <div className="flex h-56 flex-col rounded-3xl border border-indigo-200 bg-white p-6 shadow-[0_10px_36px_-12px_rgba(67,56,202,0.25)]">
-      <p className="text-sm leading-snug text-indigo-950">
+    <div className="flex h-56 flex-col rounded-3xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <p className="text-sm leading-snug text-foreground">
         Max window size for Selective-Reject ARQ with k-bit sequence numbers?
       </p>
       <div className="mt-3 space-y-1.5">
@@ -72,12 +72,12 @@ export function MiniQuiz() {
               onClick={() => setPicked(i)}
               className={`flex w-full cursor-pointer items-center justify-between rounded-xl border px-3 py-1.5 text-left text-sm transition-all duration-200 ${
                 state === "idle"
-                  ? "border-indigo-200 text-indigo-950 hover:-translate-y-0.5 hover:border-indigo-400"
+                  ? "border-border text-foreground hover:-translate-y-0.5 hover:border-primary/50"
                   : state === "right"
                     ? "border-green-500 bg-green-50 font-medium text-green-800"
                     : state === "wrong"
                       ? "border-red-400 bg-red-50 text-red-700"
-                      : "border-indigo-100 text-indigo-300"
+                      : "border-border text-muted-foreground"
               }`}
             >
               {o.label}
@@ -90,7 +90,7 @@ export function MiniQuiz() {
       <p
         className={`mt-auto pt-2 text-xs transition-opacity duration-300 ${
           done ? "opacity-100" : "opacity-0"
-        } text-indigo-500`}
+        } text-muted-foreground`}
       >
         The window halves so old frames can&apos;t masquerade as new ones —
         p. 28.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BookOpen, LayoutGrid, Layers, LogOut, Search } from "lucide-react";
 import { NavLink } from "./nav-link";
 import { ProfileSwitcher } from "./profile-switcher";
+import { ThemeToggle } from "./theme-toggle";
 
 type SessionRow = { id: string; title: string; cards: number; due: number };
 
@@ -106,6 +107,7 @@ export function Sidebar({
       </nav>
 
       <div className="space-y-1 border-t border-sidebar-border p-3">
+        <ThemeToggle />
         <ProfileSwitcher
           profiles={profiles}
           currentName={profileName}
@@ -154,6 +156,7 @@ export function MobileBar({
           Valedictorian
         </Link>
         <div className="flex items-center gap-1">
+          <ThemeToggle compact />
           {profiles && profiles.length > 0 && (
             <ProfileSwitcher
               profiles={profiles}

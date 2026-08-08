@@ -39,6 +39,11 @@ export function ReviewClient({
   const [queue, setQueue] = useState(cards);
   const [flipped, setFlipped] = useState(false);
   const [reviewed, setReviewed] = useState(0);
+  const [grades, setGrades] = useState({ again: 0, good: 0, easy: 0 });
+  const startTime = useRef(Date.now());
+  const [swipeX, setSwipeX] = useState(0);
+  const pointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
+  const swipedRef = useRef(false);
   const [lastGraded, setLastGraded] = useState<{
     card: Card;
     grade: "again" | "good" | "easy";
@@ -73,6 +78,7 @@ export function ReviewClient({
       if (!card || !flipped) return;
       setFlipped(false);
       setReviewed((n) => n + 1);
+      setGrades((prev) => ({ ...prev, [g]: prev[g] + 1 }));
       setQueue((q) => (g === "again" ? [...q.slice(1), card] : q.slice(1)));
       const res = await fetch("/api/review", {
         method: "POST",
@@ -90,6 +96,7 @@ export function ReviewClient({
   const undo = useCallback(async () => {
     if (!lastGraded) return;
     const { card: undoneCard, grade: undoneGrade, prev } = lastGraded;
+    setGrades((g) => ({ ...g, [undoneGrade]: Math.max(0, g[undoneGrade] - 1) }));
     setLastGraded(null);
     setFlipped(false);
     setReviewed((n) => Math.max(0, n - 1));
@@ -122,18 +129,67 @@ export function ReviewClient({
 
   const total = reviewed + queue.length;
 
+  const SWIPE_THRESHOLD = 60;
+
+  function onPointerDown(e: React.PointerEvent) {
+    if (!flipped) return;
+    pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e: React.PointerEvent) {
+    if (!pointerStart.current || pointerStart.current.id !== e.pointerId) return;
+    const dx = e.clientX - pointerStart.current.x;
+    const dy = e.clientY - pointerStart.current.y;
+    if (Math.abs(dx) > Math.abs(dy)) setSwipeX(dx);
+  }
+  function onPointerUp(e: React.PointerEvent) {
+    if (!pointerStart.current || pointerStart.current.id !== e.pointerId) return;
+    const dx = e.clientX - pointerStart.current.x;
+    const dy = e.clientY - pointerStart.current.y;
+    pointerStart.current = null;
+    setSwipeX(0);
+    if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
+      swipedRef.current = true;
+      grade(dx < 0 ? "again" : "good");
+    }
+  }
+  function onPointerCancel() {
+    pointerStart.current = null;
+    setSwipeX(0);
+  }
+
   if (!card) {
+    const elapsed = Math.round((Date.now() - startTime.current) / 60000);
+    const total = grades.again + grades.good + grades.easy;
     return (
-      <div className="mt-20 flex flex-col items-center text-center animate-slide-up">
+      <div className="mt-12 flex flex-col items-center text-center animate-slide-up">
         <div className="flex size-16 items-center justify-center rounded-full bg-green-500/15">
           <CheckCircle2 className="size-8 text-green-600" />
         </div>
         <h2 className="mt-4 text-xl font-semibold">
-          {reviewed ? `${reviewed} cards reviewed` : "Nothing due"}
+          {total ? "Session complete" : "Nothing due"}
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Come back when the next cards fall due.
-        </p>
+        {total > 0 && (
+          <div className="mt-5 grid w-full max-w-xs grid-cols-3 gap-3 text-center">
+            <div className="rounded-xl bg-red-500/10 px-3 py-2.5">
+              <p className="text-lg font-semibold tabular-nums text-red-700 dark:text-red-400">{grades.again}</p>
+              <p className="text-xs text-muted-foreground">Again</p>
+            </div>
+            <div className="rounded-xl bg-primary/10 px-3 py-2.5">
+              <p className="text-lg font-semibold tabular-nums text-primary">{grades.good}</p>
+              <p className="text-xs text-muted-foreground">Good</p>
+            </div>
+            <div className="rounded-xl bg-green-500/10 px-3 py-2.5">
+              <p className="text-lg font-semibold tabular-nums text-green-700 dark:text-green-400">{grades.easy}</p>
+              <p className="text-xs text-muted-foreground">Easy</p>
+            </div>
+          </div>
+        )}
+        {total > 0 && (
+          <p className="mt-4 text-sm text-muted-foreground">
+            {total} card{total === 1 ? "" : "s"} in {elapsed < 1 ? "under a minute" : `${elapsed} min`}
+          </p>
+        )}
         <Link
           href={sessionId ? `/sessions/${sessionId}` : "/"}
           className="btn-squish mt-8 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground"
@@ -165,11 +221,27 @@ export function ReviewClient({
       {/* min-height keeps the grade row still when the answer expands — the
           buttons must not slide out from under the cursor mid-review. */}
       <button
-        onClick={() => setFlipped((f) => !f)}
+        onClick={() => {
+          if (swipedRef.current) { swipedRef.current = false; return; }
+          setFlipped((f) => !f);
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
         aria-expanded={flipped}
-        className="flex min-h-[18rem] w-full cursor-pointer flex-col rounded-2xl border bg-card p-8 text-left transition-colors hover:border-primary/30 sm:p-10"
-        style={{ boxShadow: "var(--shadow-soft)" }}
+        className="relative flex min-h-[18rem] w-full cursor-pointer flex-col rounded-2xl border bg-card p-8 text-left transition-colors hover:border-primary/30 sm:p-10 touch-pan-y"
+        style={{
+          boxShadow: "var(--shadow-soft)",
+          transform: swipeX ? `translateX(${swipeX}px)` : undefined,
+          transition: swipeX ? "none" : "transform 200ms ease-out",
+        }}
       >
+        {swipeX !== 0 && (
+          <div
+            className={`pointer-events-none absolute inset-0 rounded-2xl ${swipeX < 0 ? "bg-red-500/10" : "bg-primary/10"}`}
+          />
+        )}
         {card.session_title && (
           <p className="mb-3 text-xs font-medium text-primary/80">
             {card.session_title}
@@ -276,11 +348,14 @@ export function ReviewClient({
             </button>
           ) : (
             <p className="text-xs text-muted-foreground">
-              tap the card or press{" "}
-              <kbd className="mx-1 rounded border bg-secondary px-1.5 py-0.5 font-sans text-[11px] font-medium">
-                space
-              </kbd>{" "}
-              to reveal
+              <span className="hidden sm:inline">
+                press{" "}
+                <kbd className="mx-1 rounded border bg-secondary px-1.5 py-0.5 font-sans text-[11px] font-medium">
+                  space
+                </kbd>{" "}
+                to reveal
+              </span>
+              <span className="sm:hidden">tap to reveal · swipe to grade</span>
             </p>
           )}
         </div>

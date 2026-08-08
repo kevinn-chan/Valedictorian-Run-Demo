@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { MobileBar, Sidebar } from "@/components/sidebar";
+import { GlobalKeys } from "@/components/global-keys";
 import { getProfiles } from "@/lib/profiles";
 
 export default async function AppLayout({
@@ -43,6 +44,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-dvh">
+      <GlobalKeys />
       <Sidebar
         sessions={rows}
         dueCount={dueCards?.length ?? 0}
