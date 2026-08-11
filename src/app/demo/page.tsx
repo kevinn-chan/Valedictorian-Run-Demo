@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BookOpen, FileText, Sparkles } from "lucide-react";
 import { DEMO_SESSION_ID, demoReader } from "@/lib/demo";
 import { DemoChat } from "./demo-chat";
+import { DemoFlashcards } from "./demo-flashcards";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 // Always live — never cache the demo corpus.
@@ -17,13 +18,18 @@ export const metadata = {
 export default async function DemoPage() {
   if (!DEMO_SESSION_ID) notFound();
   const sb = demoReader();
-  const [{ data: session }, { data: pages }] = await Promise.all([
+  const [{ data: session }, { data: pages }, { data: sampleCards }] = await Promise.all([
     sb.from("sessions").select("title").eq("id", DEMO_SESSION_ID).single(),
     sb
       .from("wiki_pages")
       .select("slug, kind, title, source_refs")
       .eq("session_id", DEMO_SESSION_ID)
       .order("title"),
+    sb
+      .from("cards")
+      .select("front, back")
+      .eq("session_id", DEMO_SESSION_ID)
+      .limit(5),
   ]);
   if (!session) notFound();
 
@@ -132,6 +138,20 @@ export default async function DemoPage() {
             </div>
           </section>
         </div>
+
+        {sampleCards && sampleCards.length > 0 && (
+          <div className="mt-12 mx-auto max-w-md">
+            <h2 className="text-center text-sm font-semibold text-foreground">
+              Try a flashcard
+            </h2>
+            <p className="mt-1 text-center text-xs text-muted-foreground">
+              Same cards the app generated from this course — flip through a few.
+            </p>
+            <div className="mt-4">
+              <DemoFlashcards cards={sampleCards} />
+            </div>
+          </div>
+        )}
 
         <section
           className="mt-16 rounded-[2.5rem] bg-gradient-to-br from-primary to-primary/80 px-8 py-12 text-center"

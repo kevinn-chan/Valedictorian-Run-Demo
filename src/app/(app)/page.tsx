@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createSession, deleteSession } from "./actions";
 import { Landing } from "./landing";
 import { getProfiles } from "@/lib/profiles";
-import { CardCover, ProgressBar, ProgressRing, ReviewHeatmap, Sparkline, StatTile } from "@/components/ui-kit";
+import { getBuddyStats } from "@/lib/buddy";
+import { CardCover, Forecast, ProgressBar, ProgressRing, ReviewHeatmap, Sparkline, StatTile, StudyBuddy } from "@/components/ui-kit";
 import { SnapshotTrigger } from "@/components/snapshot-trigger";
 
 export default async function Home() {
@@ -14,7 +15,12 @@ export default async function Home() {
   if (!auth?.claims) return <Landing />;
 
   const email = (auth.claims.email as string | undefined)?.toLowerCase();
-  const profileName = getProfiles().find((p) => p.email === email)?.name;
+  const profiles = getProfiles();
+  const profileName = profiles.find((p) => p.email === email)?.name;
+  const buddyProfile = profiles.find((p) => p.email !== email);
+  const buddyStatsPromise = buddyProfile
+    ? getBuddyStats(buddyProfile.email)
+    : Promise.resolve(null);
 
   const now = new Date().toISOString();
   const [
@@ -24,6 +30,7 @@ export default async function Home() {
     { data: figures },
     { data: reviews },
     { data: snapshots },
+    buddyStats,
   ] = await Promise.all([
       supabase
         .from("sessions")
@@ -48,6 +55,7 @@ export default async function Home() {
         .eq("user_id", auth.claims.sub as string)
         .order("snapshot_date", { ascending: false })
         .limit(14),
+      buddyStatsPromise,
     ]);
 
   const coverBySession = new Map<
@@ -326,6 +334,8 @@ export default async function Home() {
             )}
           </div>
 
+          <Forecast cards={cards ?? []} />
+
           <ReviewHeatmap
             reviews={reviews ?? []}
             streak={streak}
@@ -369,6 +379,17 @@ export default async function Home() {
                 ))}
               </ul>
             </div>
+          )}
+
+          {buddyStats && buddyProfile && (
+            <StudyBuddy
+              name={buddyProfile.name}
+              streak={buddyStats.streak}
+              masteryPct={buddyStats.masteryPct}
+              mastered={buddyStats.mastered}
+              totalCards={buddyStats.totalCards}
+              weakestTopic={buddyStats.weakestTopic}
+            />
           )}
 
           <div

@@ -72,3 +72,69 @@ Rules:
   if (error) throw new Error(error.message);
   return object.cards.length;
 }
+
+const TopicCardsSchema = z.object({
+  cards: z.array(
+    z.object({
+      front: z.string().describe("A precise question or prompt"),
+      back: z.string().describe("The answer, complete but tight"),
+      page: z.number().int().describe("the page number (from the inline (p. N) citations) where the answer is found"),
+    })
+  ),
+});
+
+/** Adds cards to a single topic without touching the rest of the deck —
+ * generateCards() replaces the whole session's deck and resets SRS progress,
+ * which is wrong for "give me a few more on this one topic". Uses the
+ * topic's own wiki markdown (already has inline (p. N) citations) as
+ * context instead of the full corpus. */
+export async function generateTopicCards(
+  supabase: SupabaseClient,
+  sessionId: string,
+  topicSlug: string,
+  mode: "more" | "harder"
+): Promise<number> {
+  const [{ data: topic }, { data: existing }] = await Promise.all([
+    supabase
+      .from("wiki_pages")
+      .select("title, markdown")
+      .eq("session_id", sessionId)
+      .eq("slug", topicSlug)
+      .eq("kind", "topic")
+      .single(),
+    supabase.from("cards").select("front").eq("session_id", sessionId).eq("topic_slug", topicSlug),
+  ]);
+  if (!topic) throw new Error("Topic not found.");
+
+  const avoid = (existing ?? []).map((c) => `- ${c.front}`).join("\n");
+  const instruction =
+    mode === "harder"
+      ? "Write 5 harder cards testing application and analysis (not recall) — apply a concept to a new scenario, compare/contrast, or work through a calculation. Skip plain definition recall."
+      : "Write 5 more cards: definitions, mechanisms, comparisons, or calculations not already covered below.";
+
+  const { object } = await generateObject({
+    model: llm(),
+    schema: TopicCardsSchema,
+    prompt: `Create spaced-repetition flashcards for one topic from a study wiki.
+
+Topic: ${topic.title}
+
+Content (page citations inline as "(p. N)"):
+${topic.markdown}
+
+${existing?.length ? `Cards that already exist for this topic — do not repeat these:\n${avoid}\n\n` : ""}${instruction}
+Answers must come only from the content above; each card cites the page number of its nearest (p. N) citation.`,
+  });
+
+  const { error } = await supabase.from("cards").insert(
+    object.cards.map((c) => ({
+      session_id: sessionId,
+      topic_slug: topicSlug,
+      front: c.front,
+      back: c.back,
+      source_ref: { page: c.page },
+    }))
+  );
+  if (error) throw new Error(error.message);
+  return object.cards.length;
+}

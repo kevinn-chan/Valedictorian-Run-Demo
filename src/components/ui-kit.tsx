@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame } from "lucide-react";
+import { Flame, Users } from "lucide-react";
 
 /* Shared vocabulary for every authenticated screen. One card shape, one tile,
    one header, one ring — so the app reads as a single surface rather than a
@@ -421,6 +421,125 @@ export function ReviewHeatmap({
         ))}
         <span>More</span>
       </div>
+    </div>
+  );
+}
+
+/** 14-day forecast of cards already scheduled to come due. Buckets each
+ * card's existing due_at — no scheduling simulation, just what's on the
+ * calendar today. Overdue cards collapse into "today". */
+export function Forecast({ cards }: { cards: { due_at: string }[] }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const days: { date: string; label: string; count: number }[] = [];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    days.push({
+      date: d.toLocaleDateString("en-CA"),
+      label: d.toLocaleDateString("en-US", { weekday: "short", day: "numeric" }),
+      count: 0,
+    });
+  }
+
+  const todayKey = days[0].date;
+  for (const c of cards) {
+    const key = new Date(c.due_at).toLocaleDateString("en-CA");
+    const bucket = key <= todayKey ? days[0] : days.find((d) => d.date === key);
+    if (bucket) bucket.count += 1;
+  }
+
+  if (cards.length === 0) return null;
+
+  const max = Math.max(1, ...days.map((d) => d.count));
+
+  return (
+    <div
+      className="rounded-2xl border bg-card p-5"
+      style={{ boxShadow: "var(--shadow-soft)" }}
+    >
+      <h2 className="text-sm font-semibold">Next 14 days</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Cards already scheduled to come due.
+      </p>
+      <div className="mt-4 flex h-20 items-end gap-1.5">
+        {days.map((d, i) => (
+          <div
+            key={d.date}
+            title={`${d.label}: ${d.count} card${d.count === 1 ? "" : "s"}`}
+            className="flex-1 rounded-[3px]"
+            style={{
+              height: `${Math.max(4, (d.count / max) * 100)}%`,
+              backgroundColor:
+                i === 0
+                  ? "var(--primary)"
+                  : "color-mix(in oklch, var(--primary) 40%, transparent)",
+            }}
+          />
+        ))}
+      </div>
+      <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+        <span>Today</span>
+        <span>+14d</span>
+      </div>
+    </div>
+  );
+}
+
+/** Read-only glance at the other profile's progress. Kevin/Tina already share
+ * one password and can fully switch into each other's account in one click —
+ * this isn't a privacy boundary, just a shortcut. */
+export function StudyBuddy({
+  name,
+  streak,
+  masteryPct,
+  mastered,
+  totalCards,
+  weakestTopic,
+}: {
+  name: string;
+  streak: number;
+  masteryPct: number;
+  mastered: number;
+  totalCards: number;
+  weakestTopic: { title: string; pct: number } | null;
+}) {
+  return (
+    <div
+      className="rounded-2xl border bg-card p-5"
+      style={{ boxShadow: "var(--shadow-soft)" }}
+    >
+      <div className="flex items-center gap-1.5">
+        <Users className="size-4 text-muted-foreground" />
+        <h2 className="text-sm font-semibold">{name}&apos;s progress</h2>
+      </div>
+      {totalCards === 0 ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          No sessions started yet.
+        </p>
+      ) : (
+        <>
+          <div className="mt-3 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Flame
+                className={`size-3.5 ${streak > 0 ? "text-orange-500" : ""}`}
+              />
+              {streak} day{streak === 1 ? "" : "s"}
+            </span>
+            <span className="text-xs font-medium tabular-nums text-muted-foreground">
+              {mastered}/{totalCards} mastered
+            </span>
+          </div>
+          <ProgressBar value={masteryPct} className="mt-2" />
+          {weakestTopic && (
+            <p className="mt-3 truncate text-xs text-muted-foreground">
+              Weakest: <span className="font-medium">{weakestTopic.title}</span> (
+              {Math.round(weakestTopic.pct * 100)}%)
+            </p>
+          )}
+        </>
+      )}
     </div>
   );
 }

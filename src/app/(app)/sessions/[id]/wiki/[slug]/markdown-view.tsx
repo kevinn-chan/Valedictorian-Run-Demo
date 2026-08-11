@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { PageViewer } from "./page-viewer";
 
 // ponytail: LLM prompt says "use Unicode, not LaTeX" but some slip through.
 // String replace at render beats adding remark-math + rehype-katex.
@@ -29,11 +30,31 @@ function cleanLatex(text: string): string {
   return text;
 }
 
+// Turns inline "(p. N)" citations (the ingest prompt's required format) into
+// markdown links with a "#cite-N" fragment, so the `a` override below can
+// open the actual PDF page inline instead of navigating. A real URL scheme
+// (e.g. "cite:4") gets stripped by react-markdown's default urlTransform,
+// which only allows http/https/mailto/tel/relative — a fragment survives it.
+// Ranges ("p. 4-6") link their first page — good enough for "show me the source".
+function linkifyCitations(text: string): string {
+  return text.replace(
+    /\(p\.\s*(\d+)(?:\s*[-–]\s*\d+)?\)/g,
+    (match, page: string) => `[${match}](#cite-${page})`
+  );
+}
+
 // ponytail: "concise" = first section of the compiled markdown, zero extra LLM
 // calls; upgrade to a generated short-form variant if truncation reads badly.
-export function MarkdownView({ markdown: raw }: { markdown: string }) {
-  const markdown = cleanLatex(raw);
+export function MarkdownView({
+  markdown: raw,
+  fileId,
+}: {
+  markdown: string;
+  fileId?: string;
+}) {
+  const markdown = linkifyCitations(cleanLatex(raw));
   const [full, setFull] = useState(true);
+  const [openPage, setOpenPage] = useState<number | null>(null);
   const firstSection = markdown.split(/\n(?=## )/)[0];
   const hasMore = firstSection.length < markdown.length;
 
@@ -60,8 +81,35 @@ export function MarkdownView({ markdown: raw }: { markdown: string }) {
         </div>
       )}
       <article className="prose mt-4 max-w-none text-sm leading-relaxed dark:prose-invert [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_li]:my-1">
-        <ReactMarkdown>{full ? markdown : firstSection}</ReactMarkdown>
+        <ReactMarkdown
+          components={{
+            a: ({ href, children }) => {
+              const page = fileId && href?.startsWith("#cite-") ? Number(href.slice(6)) : null;
+              if (page) {
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setOpenPage(page)}
+                    className="mx-0.5 rounded px-0.5 text-primary underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                  >
+                    {children}
+                  </button>
+                );
+              }
+              return (
+                <a href={href} target="_blank" rel="noreferrer">
+                  {children}
+                </a>
+              );
+            },
+          }}
+        >
+          {full ? markdown : firstSection}
+        </ReactMarkdown>
       </article>
+      {openPage && fileId && (
+        <PageViewer fileId={fileId} page={openPage} onClose={() => setOpenPage(null)} />
+      )}
     </div>
   );
 }

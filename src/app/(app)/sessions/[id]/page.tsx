@@ -92,6 +92,13 @@ export default async function SessionPage({
     (f) => f.ingest_status === "pending" || f.ingest_status === "processing"
   );
 
+  // Onboarding: still true right up until the user touches a single card —
+  // no dismiss button, no stored state, just a real progress signal that
+  // already lives in the data we fetched.
+  const isNewSession =
+    cardCount > 0 && cards.every((c) => c.reps === 0 && c.lapses === 0);
+  const ONBOARD_STEP: Record<string, number> = { wiki: 1, review: 2, quiz: 3 };
+
   const base = `/sessions/${session.id}`;
   const tabGroups = [
     {
@@ -235,42 +242,58 @@ export default async function SessionPage({
 
       {compiled && (
         <div className="mt-8 space-y-6">
+          {isNewSession && (
+            <p className="text-sm text-muted-foreground">
+              New session — start with{" "}
+              <span className="font-medium text-foreground">① Wiki</span>, then{" "}
+              <span className="font-medium text-foreground">② Review</span>, then try a{" "}
+              <span className="font-medium text-foreground">③ Mock exam</span>.
+            </p>
+          )}
           {tabGroups.map((group) => (
             <div key={group.label}>
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 {group.label}
               </p>
               <div className="mt-2.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {group.tabs.map(({ href, label, sub, Icon, hot }) => (
-                  <Link
-                    key={href}
-                    href={`${base}/${href}`}
-                    prefetch={false}
-                    className={`group flex items-center gap-3.5 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] ${
-                      hot
-                        ? "border-primary/25 bg-primary/8"
-                        : "border-border bg-card"
-                    }`}
-                  >
-                    <span
-                      className={`flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
-                        hot
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-primary group-hover:bg-primary group-hover:text-primary-foreground"
+                {group.tabs.map(({ href, label, sub, Icon, hot }) => {
+                  const step = isNewSession ? ONBOARD_STEP[href] : undefined;
+                  return (
+                    <Link
+                      key={href}
+                      href={`${base}/${href}`}
+                      prefetch={false}
+                      className={`group relative flex items-center gap-3.5 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] ${
+                        hot || step
+                          ? "border-primary/25 bg-primary/8"
+                          : "border-border bg-card"
                       }`}
                     >
-                      <Icon className="size-[18px]" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-semibold">
-                        {label}
+                      {step && (
+                        <span className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+                          {step}
+                        </span>
+                      )}
+                      <span
+                        className={`flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                          hot || step
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-primary group-hover:bg-primary group-hover:text-primary-foreground"
+                        }`}
+                      >
+                        <Icon className="size-[18px]" />
                       </span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {sub}
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold">
+                          {label}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {sub}
+                        </span>
                       </span>
-                    </span>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ))}
