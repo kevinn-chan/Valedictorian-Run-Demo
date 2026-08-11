@@ -23,7 +23,7 @@ export function LoginForm({
       <h1 className="mt-2 text-3xl font-semibold tracking-tight">
         {step === "password" ? "Sign in" : "Who's studying?"}
       </h1>
-      <p className="mt-2 text-sm text-indigo-900/70">
+      <p className="mt-2 text-sm text-muted-foreground">
         {step === "password"
           ? "Enter the shared password to continue."
           : "Pick your profile."}
@@ -56,7 +56,7 @@ export function LoginForm({
                 }
               }}
               placeholder="Shared password"
-              className="h-11 w-full rounded-xl border border-indigo-200 bg-white px-4 text-center text-sm text-indigo-950 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200"
+              className="h-11 w-full rounded-xl border border-border bg-card px-4 text-center text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-ring/25"
             />
             {hadError && (
               <p className="mt-3 text-sm text-red-600">
@@ -67,7 +67,7 @@ export function LoginForm({
               type="button"
               disabled={!password}
               onClick={() => setStep("profile")}
-              className="mt-6 h-11 w-full rounded-xl bg-indigo-600 text-sm font-medium text-white transition hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
+              className="mt-6 h-11 w-full rounded-xl bg-primary text-sm font-medium text-primary-foreground transition hover:bg-primary/90 active:scale-95 disabled:opacity-50"
             >
               Continue
             </button>
@@ -84,10 +84,13 @@ export function LoginForm({
                   type="submit"
                   className="group flex w-28 cursor-pointer flex-col items-center gap-3"
                 >
-                  <span className="flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-indigo-500 text-3xl font-semibold text-white shadow-[0_10px_30px_-10px_rgba(79,70,229,0.5)] transition duration-200 group-hover:-translate-y-1 group-hover:ring-4 group-hover:ring-indigo-300/60 group-active:scale-95">
+                  <span
+                    className="flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-3xl font-semibold text-primary-foreground transition duration-200 group-hover:-translate-y-1 group-hover:ring-4 group-hover:ring-primary/30 group-active:scale-95"
+                    style={{ boxShadow: "var(--shadow-soft-hover)" }}
+                  >
                     {p.name.charAt(0).toUpperCase()}
                   </span>
-                  <span className="text-sm font-medium text-indigo-900/70 transition group-hover:text-indigo-950">
+                  <span className="text-sm font-medium text-muted-foreground transition group-hover:text-foreground">
                     {p.name}
                   </span>
                 </button>
@@ -96,7 +99,7 @@ export function LoginForm({
             <button
               type="button"
               onClick={() => setStep("password")}
-              className="mt-8 text-xs text-indigo-900/50 transition hover:text-indigo-700"
+              className="mt-8 text-xs text-muted-foreground transition hover:text-primary"
             >
               ← Use a different password
             </button>

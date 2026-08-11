@@ -36,3 +36,8 @@ export function schedule(
 
   return { interval_days, ease, reps, lapses, due_at: due.toISOString() };
 }
+
+export const LEECH_THRESHOLD = 4;
+
+export const isLeech = (card: { lapses: number }) =>
+  card.lapses >= LEECH_THRESHOLD;

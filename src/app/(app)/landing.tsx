@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { FlipCard, MiniQuiz } from "./landing-demos";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const OBJECTIVES = [
   {
@@ -62,12 +63,15 @@ export function Landing() {
         <p className="text-sm font-semibold tracking-tight">
           <span className="text-primary">●</span> Valedictorian Run
         </p>
-        <Link
-          href="/login"
-          className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:-translate-y-0.5 hover:bg-primary/90 active:scale-95"
-        >
-          Sign in
-        </Link>
+        <div className="flex items-center gap-2">
+          <ThemeToggle compact />
+          <Link
+            href="/login"
+            className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:-translate-y-0.5 hover:bg-primary/90 active:scale-95"
+          >
+            Sign in
+          </Link>
+        </div>
       </header>
 
       <main>

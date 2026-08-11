@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BookOpen, FileText, Sparkles } from "lucide-react";
 import { DEMO_SESSION_ID, demoReader } from "@/lib/demo";
 import { DemoChat } from "./demo-chat";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 // Always live — never cache the demo corpus.
 export const dynamic = "force-dynamic";
@@ -33,29 +34,32 @@ export default async function DemoPage() {
     .map((t) => `Explain ${t.title} like I missed that lecture`);
 
   return (
-    <div className="min-h-screen bg-[#F7F8FF] text-indigo-950">
+    <div className="min-h-screen bg-background text-foreground">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
         <Link href="/" className="text-sm font-semibold tracking-tight">
-          <span className="text-indigo-600">●</span> Valedictorian Run
+          <span className="text-primary">●</span> Valedictorian Run
         </Link>
-        <Link
-          href="/"
-          className="rounded-full border border-indigo-200 bg-white px-4 py-2 text-sm font-medium text-indigo-700 transition hover:-translate-y-0.5 hover:border-indigo-400 active:scale-95"
-        >
-          What is this?
-        </Link>
+        <div className="flex items-center gap-2">
+          <ThemeToggle compact />
+          <Link
+            href="/"
+            className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-primary transition hover:-translate-y-0.5 hover:border-primary/50 active:scale-95"
+          >
+            What is this?
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto w-full max-w-5xl px-6 pb-24">
         <section className="text-center">
-          <p className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs font-medium text-indigo-600">
+          <p className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-primary">
             <Sparkles className="size-3.5" />
             Live read-only demo — no sign-in
           </p>
           <h1 className="mx-auto mt-5 max-w-2xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
             One course, already compiled into a study system
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-indigo-900/70">
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground">
             This is a real sample — <strong>{session.title}</strong> — that the app turned
             into a topic wiki and a corpus you can question. Browse the notes, then ask it
             anything below. In the full app you drop in your <em>own</em> materials.
@@ -68,10 +72,10 @@ export default async function DemoPage() {
         <div className="mt-12 grid gap-6 lg:grid-cols-2">
           {/* Compiled wiki */}
           <section className="min-w-0">
-            <h2 className="text-sm font-semibold text-indigo-950">
+            <h2 className="text-sm font-semibold text-foreground">
               The compiled wiki
             </h2>
-            <p className="mt-1 text-xs text-indigo-900/60">
+            <p className="mt-1 text-xs text-muted-foreground">
               Every topic below was written by the app from the source notes — with page
               citations.
             </p>
@@ -84,14 +88,14 @@ export default async function DemoPage() {
                     <Link
                       href={`/demo/${t.slug}`}
                       prefetch={false}
-                      className="group flex items-center gap-3 rounded-2xl border border-indigo-100 bg-white px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300"
+                      className="group flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50"
                     >
-                      <BookOpen className="size-4 shrink-0 text-indigo-400 transition group-hover:text-indigo-600" />
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium group-hover:text-indigo-700">
+                      <BookOpen className="size-4 shrink-0 text-muted-foreground transition group-hover:text-primary" />
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium group-hover:text-primary">
                         {t.title}
                       </span>
                       {refPages && refPages.length > 0 && (
-                        <span className="text-xs text-indigo-900/50">
+                        <span className="text-xs text-muted-foreground">
                           p. {Math.min(...refPages)}–{Math.max(...refPages)}
                         </span>
                       )}
@@ -104,10 +108,10 @@ export default async function DemoPage() {
                   <Link
                     href={`/demo/${d.slug}`}
                     prefetch={false}
-                    className="group flex items-center gap-3 rounded-2xl border border-dashed border-indigo-200 bg-white px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300"
+                    className="group flex items-center gap-3 rounded-2xl border border-dashed border-border bg-card px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50"
                   >
-                    <FileText className="size-4 shrink-0 text-indigo-400 transition group-hover:text-indigo-600" />
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium group-hover:text-indigo-700">
+                    <FileText className="size-4 shrink-0 text-muted-foreground transition group-hover:text-primary" />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium group-hover:text-primary">
                       {d.title} — full digest
                     </span>
                   </Link>
@@ -118,8 +122,8 @@ export default async function DemoPage() {
 
           {/* Live chat */}
           <section className="min-w-0">
-            <h2 className="text-sm font-semibold text-indigo-950">Ask the corpus</h2>
-            <p className="mt-1 text-xs text-indigo-900/60">
+            <h2 className="text-sm font-semibold text-foreground">Ask the corpus</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
               Grounded, cited answers — or an honest &ldquo;that isn&rsquo;t in the
               materials.&rdquo;
             </p>
@@ -129,18 +133,21 @@ export default async function DemoPage() {
           </section>
         </div>
 
-        <section className="mt-16 rounded-[2.5rem] bg-gradient-to-br from-indigo-600 to-indigo-500 px-8 py-12 text-center shadow-[0_20px_60px_-20px_rgba(79,70,229,0.55)]">
-          <h2 className="text-2xl font-semibold tracking-tight text-white">
+        <section
+          className="mt-16 rounded-[2.5rem] bg-gradient-to-br from-primary to-primary/80 px-8 py-12 text-center"
+          style={{ boxShadow: "var(--shadow-soft-hover)" }}
+        >
+          <h2 className="text-2xl font-semibold tracking-tight text-primary-foreground">
             Want it for your own notes?
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-indigo-100">
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-primary-foreground/80">
             The whole thing is open source — deploy your own in a few minutes.
           </p>
           <a
             href="https://github.com/kevinn-chan/Valedictorian-Run-Demo"
             target="_blank"
             rel="noreferrer"
-            className="mt-6 inline-block rounded-2xl bg-white px-7 py-3.5 text-base font-semibold text-indigo-600 transition hover:-translate-y-0.5 active:scale-95"
+            className="mt-6 inline-block rounded-2xl bg-card px-7 py-3.5 text-base font-semibold text-primary transition hover:-translate-y-0.5 active:scale-95"
           >
             View the code →
           </a>

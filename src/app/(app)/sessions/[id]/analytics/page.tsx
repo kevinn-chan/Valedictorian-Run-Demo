@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { GraduationCap, Layers, Sparkles, TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { topicMastery, rankByWeakness, examTrend, UNGROUPED_SLUG } from "@/lib/analytics";
-import { PageHeader, ProgressRing, StatTile } from "@/components/ui-kit";
+import { LEECH_THRESHOLD } from "@/lib/srs";
+import { PageHeader, ProgressRing, Sparkline, StatTile } from "@/components/ui-kit";
 
 const STATUS = {
   weak: { label: "Needs work", cls: "bg-red-500/12 text-red-700", bar: "bg-red-500" },
@@ -11,33 +12,6 @@ const STATUS = {
   solid: { label: "Solid", cls: "bg-emerald-500/12 text-emerald-700", bar: "bg-emerald-500" },
   unstudied: { label: "Not started", cls: "bg-secondary text-muted-foreground", bar: "bg-muted-foreground/30" },
 } as const;
-
-// Exam accuracy over time. Area fill under the line gives the trend weight the
-// bare stroke didn't have at this size.
-function Sparkline({ pts }: { pts: { pct: number }[] }) {
-  const w = 320, h = 80, pad = 8;
-  const xs = pts.map((_, i) =>
-    pts.length > 1 ? pad + (i * (w - 2 * pad)) / (pts.length - 1) : w / 2
-  );
-  const ys = pts.map((p) => h - pad - p.pct * (h - 2 * pad));
-  const line = xs.map((x, i) => `${i ? "L" : "M"}${x.toFixed(1)} ${ys[i].toFixed(1)}`).join(" ");
-  const area = `${line} L${xs[xs.length - 1].toFixed(1)} ${h} L${xs[0].toFixed(1)} ${h} Z`;
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-20 w-full max-w-[320px]" preserveAspectRatio="none" aria-hidden>
-      <defs>
-        <linearGradient id="spark" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill="url(#spark)" />
-      <path d={line} fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      {xs.map((x, i) => (
-        <circle key={i} cx={x} cy={ys[i]} r="3" fill="var(--primary)" stroke="var(--card)" strokeWidth="1.5" />
-      ))}
-    </svg>
-  );
-}
 
 export default async function AnalyticsPage({
   params,
@@ -52,7 +26,7 @@ export default async function AnalyticsPage({
       supabase.from("sessions").select("id, title").eq("id", id).single(),
       supabase
         .from("cards")
-        .select("topic_slug, reps, lapses, ease, due_at")
+        .select("front, topic_slug, reps, lapses, ease, due_at")
         .eq("session_id", id),
       supabase
         .from("wiki_pages")
@@ -158,6 +132,47 @@ export default async function AnalyticsPage({
               </ul>
             )}
           </section>
+
+          {(() => {
+            const leeches = (cards ?? [])
+              .filter((c) => c.lapses >= LEECH_THRESHOLD)
+              .sort((a, b) => b.lapses - a.lapses);
+            if (!leeches.length) return null;
+            const topicMap = new Map((topics ?? []).map((t) => [t.slug, t.title]));
+            return (
+              <section className="mt-6">
+                <h2 className="text-base font-semibold text-red-700 dark:text-red-400">
+                  Leeches — {leeches.length} card{leeches.length === 1 ? "" : "s"} you keep forgetting
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Cards with {LEECH_THRESHOLD}+ lapses. Consider rephrasing, splitting, or asking whether you really need this fact.
+                </p>
+                <ul className="mt-4 space-y-1">
+                  {leeches.map((c, i) => (
+                    <li key={i} className="rounded-xl px-4 py-3 transition-colors hover:bg-red-500/5">
+                      <div className="flex items-center gap-3">
+                        <span className="min-w-0 flex-1 truncate text-sm">
+                          {(c as { front?: string }).front ?? "—"}
+                        </span>
+                        <span className="shrink-0 rounded-full bg-red-500/12 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-400">
+                          {c.lapses} lapses
+                        </span>
+                      </div>
+                      {c.topic_slug && topicMap.has(c.topic_slug) && (
+                        <Link
+                          href={`/sessions/${id}/wiki/${c.topic_slug}`}
+                          prefetch={false}
+                          className="mt-1 text-xs text-muted-foreground hover:text-primary"
+                        >
+                          {topicMap.get(c.topic_slug)}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })()}
         </div>
 
         <aside className="space-y-4">

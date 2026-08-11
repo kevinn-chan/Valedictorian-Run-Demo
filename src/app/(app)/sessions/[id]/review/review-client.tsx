@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
-import { schedule, type Grade } from "@/lib/srs";
+import { schedule, type Grade, isLeech } from "@/lib/srs";
 
 interface Card {
   id: string;
@@ -246,6 +246,11 @@ export function ReviewClient({
           <p className="mb-3 text-xs font-medium text-primary/80">
             {card.session_title}
           </p>
+        )}
+        {isLeech(card) && (
+          <span className="mb-2 inline-block rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] font-semibold text-red-700 dark:text-red-400">
+            Leech · {card.lapses} lapses
+          </span>
         )}
         <p className="text-lg leading-relaxed">{card.front}</p>
 

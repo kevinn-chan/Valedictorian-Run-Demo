@@ -19,7 +19,7 @@ function AssistantMessage({ text }: { text: string }) {
     (_m, name: string, page: string) => `\`${name} p.${page}\``
   );
   return (
-    <div className="prose prose-sm max-w-none leading-relaxed text-indigo-950 [&_code]:rounded-full [&_code]:bg-indigo-100 [&_code]:px-2 [&_code]:py-0.5 [&_code]:text-xs [&_code]:font-medium [&_code]:text-indigo-700 [&_code]:before:content-none [&_code]:after:content-none [&_li]:my-0.5">
+    <div className="prose prose-sm max-w-none leading-relaxed text-foreground [&_code]:rounded-full [&_code]:bg-secondary [&_code]:px-2 [&_code]:py-0.5 [&_code]:text-xs [&_code]:font-medium [&_code]:text-primary [&_code]:before:content-none [&_code]:after:content-none [&_li]:my-0.5">
       <ReactMarkdown>{chipped}</ReactMarkdown>
     </div>
   );
@@ -33,11 +33,14 @@ export function DemoChat({ starters }: { starters: string[] }) {
   const busy = status === "submitted" || status === "streaming";
 
   return (
-    <div className="rounded-3xl border border-indigo-200 bg-white p-6 shadow-[0_10px_36px_-12px_rgba(67,56,202,0.25)]">
-      <p className="text-sm font-semibold text-indigo-950">
+    <div
+      className="rounded-3xl border border-border bg-card p-6"
+      style={{ boxShadow: "var(--shadow-soft)" }}
+    >
+      <p className="text-sm font-semibold text-foreground">
         Ask this sample course anything
       </p>
-      <p className="mt-1 text-xs text-indigo-900/60">
+      <p className="mt-1 text-xs text-muted-foreground">
         Answers come only from the compiled notes — every claim carries its page.
       </p>
 
@@ -48,7 +51,7 @@ export function DemoChat({ starters }: { starters: string[] }) {
               <button
                 key={q}
                 onClick={() => sendMessage({ text: q })}
-                className="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-left text-xs text-indigo-700 transition hover:-translate-y-0.5 hover:border-indigo-400 active:scale-95"
+                className="rounded-full border border-border bg-card px-3 py-1.5 text-left text-xs text-primary transition hover:-translate-y-0.5 hover:border-primary/50 active:scale-95"
               >
                 {q}
               </button>
@@ -60,7 +63,7 @@ export function DemoChat({ starters }: { starters: string[] }) {
             key={m.id}
             className={
               m.role === "user"
-                ? "ml-8 rounded-2xl bg-indigo-50 px-4 py-2.5 text-sm text-indigo-950"
+                ? "ml-8 rounded-2xl bg-secondary px-4 py-2.5 text-sm text-foreground"
                 : "text-sm"
             }
           >
@@ -78,10 +81,10 @@ export function DemoChat({ starters }: { starters: string[] }) {
           </div>
         ))}
         {busy && messages.at(-1)?.role === "user" && (
-          <p className="text-xs text-indigo-400">Reading the notes…</p>
+          <p className="text-xs text-muted-foreground">Reading the notes…</p>
         )}
         {error && (
-          <p className="text-xs text-indigo-500">
+          <p className="text-xs text-muted-foreground">
             The demo is popular right now — give it a moment and try again.
           </p>
         )}
@@ -100,12 +103,12 @@ export function DemoChat({ starters }: { starters: string[] }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="e.g. what is a vector in R?"
-          className="h-10 flex-1 rounded-xl border border-indigo-200 bg-white px-3.5 text-sm text-indigo-950 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200"
+          className="h-10 flex-1 rounded-xl border border-border bg-background px-3.5 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-ring/25"
         />
         <button
           type="submit"
           disabled={busy}
-          className="h-10 rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-indigo-700 active:scale-95 disabled:opacity-60"
+          className="h-10 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:-translate-y-0.5 hover:bg-primary/90 active:scale-95 disabled:opacity-60"
         >
           Ask
         </button>

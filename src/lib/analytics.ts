@@ -114,3 +114,36 @@ export function examTrend(
   const best = pts.reduce((m, p) => (p.pct > m ? p.pct : m), 0);
   return { pts, latest: pts.at(-1) ?? null, best, count: pts.length };
 }
+
+// Topic slugs are only unique WITHIN a session — two different sessions can
+// each have a topic slugged "overview". These local types (scoped to
+// sortByWeakness only, so CardStat/TopicRef's public contract for other
+// callers like the per-session analytics page is untouched) carry session_id
+// so cards/topics from different sessions never get bucketed together.
+type WeaknessCard = CardStat & { session_id: string };
+type WeaknessTopic = TopicRef & { session_id: string };
+
+const weaknessKey = (sessionId: string, slug: string) => `${sessionId}:${slug}`;
+
+// Sort due cards: weakest-topic cards first, then highest-lapse within topic.
+// Ungrouped cards (no topic match) go last. Mastery is computed per
+// (session_id, topic_slug) pair so same-named topics in different sessions
+// never get merged into one bucket.
+export function sortByWeakness<
+  T extends { topic_slug: string | null; lapses: number; session_id: string },
+>(dueCards: T[], allCards: WeaknessCard[], topics: WeaknessTopic[]): T[] {
+  const pctMap = new Map<string, number>();
+  for (const t of topics) {
+    const cs = allCards.filter(
+      (c) => c.session_id === t.session_id && c.topic_slug === t.slug
+    );
+    if (!cs.length) continue;
+    const mastered = cs.filter((c) => c.reps >= 2).length;
+    pctMap.set(weaknessKey(t.session_id, t.slug), mastered / cs.length);
+  }
+  return [...dueCards].sort((a, b) => {
+    const pa = pctMap.get(weaknessKey(a.session_id, a.topic_slug ?? "")) ?? 1;
+    const pb = pctMap.get(weaknessKey(b.session_id, b.topic_slug ?? "")) ?? 1;
+    return pa - pb || b.lapses - a.lapses;
+  });
+}
