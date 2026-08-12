@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Sparkles } from "lucide-react";
 import { schedule, type Grade, isLeech } from "@/lib/srs";
 
 interface Card {
@@ -49,6 +49,9 @@ export function ReviewClient({
     grade: "again" | "good" | "easy";
     prev: { interval_days: number; ease: number; reps: number; lapses: number; due_at: string };
   } | null>(null);
+  // Display-only "Help me remember" — regenerated per card, never persisted.
+  const [mnemonic, setMnemonic] = useState<{ cardId: string; text: string } | null>(null);
+  const [mnemonicLoading, setMnemonicLoading] = useState(false);
   // Hide-all-but-one: cache sibling occlusion rects per figure
   const siblingCache = useRef<Record<string, { cardId: string; rect: { x: number; y: number; w: number; h: number } }[]>>({});
   const [siblings, setSiblings] = useState<{ cardId: string; rect: { x: number; y: number; w: number; h: number } }[]>([]);
@@ -92,6 +95,27 @@ export function ReviewClient({
     },
     [card, flipped]
   );
+
+  useEffect(() => {
+    setMnemonic(null);
+    setMnemonicLoading(false);
+  }, [card?.id]);
+
+  const getMnemonic = useCallback(async () => {
+    if (!lastGraded) return;
+    setMnemonicLoading(true);
+    try {
+      const res = await fetch("/api/mnemonic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cardId: lastGraded.card.id }),
+      });
+      const data = await res.json();
+      if (data.mnemonic) setMnemonic({ cardId: lastGraded.card.id, text: data.mnemonic });
+    } finally {
+      setMnemonicLoading(false);
+    }
+  }, [lastGraded]);
 
   const undo = useCallback(async () => {
     if (!lastGraded) return;
@@ -339,29 +363,50 @@ export function ReviewClient({
           </button>
         </div>
       ) : (
-        // Same height as the grade row so revealing never shifts the layout.
-        <div className="mt-3 flex h-[42px] items-center justify-center">
-          {lastGraded ? (
-            <button
-              onClick={undo}
-              className="btn-squish rounded-lg border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
-            >
-              Undo{" "}
-              <kbd className="ml-1 rounded border bg-secondary px-1 py-0.5 font-sans text-[10px]">
-                u
-              </kbd>
-            </button>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              <span className="hidden sm:inline">
-                press{" "}
-                <kbd className="mx-1 rounded border bg-secondary px-1.5 py-0.5 font-sans text-[11px] font-medium">
-                  space
-                </kbd>{" "}
-                to reveal
-              </span>
-              <span className="sm:hidden">tap to reveal · swipe to grade</span>
-            </p>
+        <div className="mt-3">
+          {/* Same height as the grade row so revealing never shifts the layout. */}
+          <div className="flex h-[42px] items-center justify-center gap-2">
+            {lastGraded ? (
+              <>
+                <button
+                  onClick={undo}
+                  className="btn-squish rounded-lg border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
+                >
+                  Undo{" "}
+                  <kbd className="ml-1 rounded border bg-secondary px-1 py-0.5 font-sans text-[10px]">
+                    u
+                  </kbd>
+                </button>
+                {lastGraded.grade === "again" &&
+                  mnemonic?.cardId !== lastGraded.card.id && (
+                    <button
+                      onClick={getMnemonic}
+                      disabled={mnemonicLoading}
+                      className="btn-squish flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-60"
+                    >
+                      <Sparkles className="size-3.5" />
+                      {mnemonicLoading ? "Thinking…" : "Help me remember"}
+                    </button>
+                  )}
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                <span className="hidden sm:inline">
+                  press{" "}
+                  <kbd className="mx-1 rounded border bg-secondary px-1.5 py-0.5 font-sans text-[11px] font-medium">
+                    space
+                  </kbd>{" "}
+                  to reveal
+                </span>
+                <span className="sm:hidden">tap to reveal · swipe to grade</span>
+              </p>
+            )}
+          </div>
+          {mnemonic && lastGraded && mnemonic.cardId === lastGraded.card.id && (
+            <div className="animate-slide-up mt-2 flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-foreground/90">
+              <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              <p>{mnemonic.text}</p>
+            </div>
           )}
         </div>
       )}

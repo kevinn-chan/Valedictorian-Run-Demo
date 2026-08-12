@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MarkdownView } from "./markdown-view";
 import { WikiNav } from "./wiki-nav";
 import { TopicCardControls } from "./topic-card-controls";
+import { TopicNotes } from "./topic-notes";
 
 export default async function WikiPage({
   params,
@@ -15,7 +16,7 @@ export default async function WikiPage({
 
   // Page content, the ordered sibling list, and this topic's figures fan out
   // together (one round-trip). `figures` is null if the table isn't migrated yet.
-  const [{ data: page }, { data: siblings }, { data: figures }] =
+  const [{ data: page }, { data: siblings }, { data: figures }, { data: notes }] =
     await Promise.all([
       supabase
         .from("wiki_pages")
@@ -34,6 +35,14 @@ export default async function WikiPage({
         .eq("session_id", id)
         .eq("topic_slug", slug)
         .order("page"),
+      // null if the annotations table isn't migrated yet — same defensive
+      // pattern as `figures` above.
+      supabase
+        .from("annotations")
+        .select("id, quote, note, created_at")
+        .eq("session_id", id)
+        .eq("wiki_slug", slug)
+        .order("created_at"),
     ]);
   if (!page) notFound();
 
@@ -71,7 +80,9 @@ export default async function WikiPage({
           {/* Prose caps its own measure so the article stays readable even
               though the shell around it is wide. */}
           <div className="mt-9 max-w-[68ch]">
-            <MarkdownView markdown={page.markdown} fileId={refs?.file_id} />
+            <TopicNotes sessionId={id} wikiSlug={slug} initialNotes={notes ?? []}>
+              <MarkdownView markdown={page.markdown} fileId={refs?.file_id} />
+            </TopicNotes>
           </div>
 
           {figures && figures.length > 0 && (

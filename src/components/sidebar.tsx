@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { BookOpen, LayoutGrid, Layers, LogOut, Search } from "lucide-react";
+import { BookOpen, CalendarClock, LayoutGrid, Layers, LogOut, Search } from "lucide-react";
 import { NavLink } from "./nav-link";
+import { PomodoroTimer } from "./pomodoro-timer";
 import { ProfileSwitcher } from "./profile-switcher";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -78,6 +79,15 @@ export function Sidebar({
             <Search className="size-[18px]" />
             Search
           </NavLink>
+          <NavLink
+            href="/plan"
+            className={ITEM}
+            activeClassName={ITEM_ACTIVE}
+            idleClassName={ITEM_IDLE}
+          >
+            <CalendarClock className="size-[18px]" />
+            Weekly plan
+          </NavLink>
         </div>
 
         {sessions.length > 0 && (
@@ -107,6 +117,7 @@ export function Sidebar({
       </nav>
 
       <div className="space-y-1 border-t border-sidebar-border p-3">
+        <PomodoroTimer />
         <ThemeToggle />
         <ProfileSwitcher
           profiles={profiles}
