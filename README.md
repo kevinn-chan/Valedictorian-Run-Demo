@@ -1,73 +1,16 @@
-# RAG is dead? — a working take
+# Valedictorian Run
 
-**Our answer: mostly yes, for the common case — and here's a real, deployed app that runs on
-that bet.**
+**Valedictorian Run** turns a course's PDFs and notes into a full study system: a browsable topic
+wiki, spaced-repetition flashcards, mock exams, teach-back grading, a day-by-day learning plan,
+and a Q&A chat that answers only from your materials — **every answer cited to its source page**.
+Drop in a semester's slides, get back something you can actually study from.
 
-**Valedictorian Run** turns a course's PDFs and notes into a study system — a browsable topic
-wiki, spaced-repetition flashcards, mock exams, teach-back grading, and a Q&A chat that answers
-only from your materials *with page citations*. It does the thing everyone reaches for
-("chat with your documents"), but with **no embeddings and no vector database anywhere.**
-It's our take on the "RAG is dead" idea Andrej Karpathy and others have been circling.
-
----
-
-## The idea
-
-"RAG is dead" is deliberately provocative. The precise version:
-
-> As context windows grow, the classic RAG pipeline — chunk → embed → vector-similarity
-> top-k → stuff the prompt — becomes unnecessary machinery for any corpus that already fits
-> in context. Retrieval isn't banned; **reaching for a vector DB by default is what's dying.**
-
-Karpathy's framing is *context engineering*: do the expensive understanding **up front**, put
-the right material in the context window, and stop treating a vector index as a prerequisite
-for grounding.
-
-## Our take
-
-We took that seriously and built a real product around it. Two moves:
-
-**1. Compile-on-ingest, not embed-on-ingest.** &nbsp;([`src/lib/ingest.ts`](src/lib/ingest.ts))
-When you upload a file, an LLM reads it *once* and compiles it into durable artifacts:
-- a structured **wiki** — topics, formulas, common exam traps;
-- faithfully **page-labeled chunks** — every page transcribed; and
-- **figures** — the model flags pages with real diagrams; we rasterize them (`mupdf` → `sharp`
-  → WebP), store them, and link each to its topic.
-
-The expensive "understanding" happens once, at upload — not on every query. And because a figure
-is just its stored image plus a page label, the chat can *read a diagram* and answer from it,
-still cited — **multimodal grounding, still no vector index.**
-
-**2. Full context first; lexical retrieval only as a fallback.** &nbsp;([`src/lib/answer.ts`](src/lib/answer.ts))
-- **Tier A (almost always):** the *entire* compiled corpus is dropped into the model's context
-  window. No retrieval step at all.
-- **Tier B (only past ~600k chars):** cheap **lexical** full-text search (Postgres `tsvector`)
-  selects the relevant pages — still no embeddings, still no vectors.
-
-Grounding survives because we keep the page labels: every claim links back to `[file p.N]`.
-You get RAG's one genuinely valuable output — **cited, source-anchored answers** — without the
-vector plumbing.
-
-## Does it actually work? (honest scorecard)
-
-- ✅ **For a course-sized corpus, yes.** A semester of slides compiles to well under the context
-  budget; the model answers from the whole thing at once, cites the right pages, and refuses
-  ("that isn't in your materials") instead of hallucinating.
-- ✅ **Simpler and cheaper to operate.** No vector DB, no embedding pipeline, no re-indexing —
-  just Postgres.
-- ⚠️ **The tail still needs retrieval.** Past ~600k chars we fall back to lexical search. So the
-  honest claim isn't "retrieval is dead" — it's **"vector RAG is unnecessary for the common
-  case; lightweight keyword retrieval covers the rest."**
-- ⚠️ **You pay up front.** Compile-on-ingest spends a real LLM call per document. The bet is that
-  cost amortizes across every later query — chat, cards, quizzes, and teach-back all read the
-  same clean compiled corpus.
-
-The take, in one line: **for bounded, personal corpora, compile + long-context + lexical
-fallback beats vector RAG on simplicity and grounding, and matches it on quality.**
+**Poke the live demo →** **[valedictorian-run.vercel.app/demo](https://valedictorian-run.vercel.app/demo)**
+— a read-only sample course, already compiled: browse the wiki and ask it cited questions, no sign-in.
 
 ---
 
-## The app that proves it
+## Features
 
 - **Sessions** — one per course; holds the full corpus.
 - **Compile-on-ingest** — PDFs/notes → page-cited chunks + a topic wiki + file digests.
@@ -87,12 +30,36 @@ Storage + Auth) · Vercel AI SDK · Gemini free tier (OpenAI as a drop-in fallba
 
 ---
 
-## Try it
+## How it works: no vector database
 
-**Poke the live demo →** **[valedictorian-run.vercel.app/demo](https://valedictorian-run.vercel.app/demo)**
-— a read-only sample course, already compiled: browse the wiki and ask it cited
-questions, no sign-in. (It's the `/demo` route in this repo; point `DEMO_SESSION_ID`
-at one of your own compiled sessions to enable it on your deploy.)
+The grounded chat and citations run with **no embeddings and no vector database anywhere.**
+
+**1. Compile-on-ingest, not embed-on-ingest.** &nbsp;([`src/lib/ingest.ts`](src/lib/ingest.ts))
+When you upload a file, an LLM reads it *once* and compiles it into durable artifacts: a
+structured **wiki** (topics, formulas, common exam traps), faithfully **page-labeled chunks**
+(every page transcribed), and **figures** — the model flags pages with real diagrams, we
+rasterize them (`mupdf` → `sharp` → WebP), store them, and link each to its topic. The expensive
+"understanding" happens once, at upload — not on every query. Because a figure is just its stored
+image plus a page label, the chat can *read a diagram* and answer from it, still cited.
+
+**2. Full context first; lexical retrieval only as a fallback.** &nbsp;([`src/lib/answer.ts`](src/lib/answer.ts))
+Almost always, the *entire* compiled corpus is dropped into the model's context window — no
+retrieval step at all. Only once a session's corpus passes ~600k chars does it fall back to
+cheap **lexical** full-text search (Postgres `tsvector`) to select the relevant pages — still no
+embeddings, still no vectors. Grounding survives either way because page labels are kept
+throughout: every claim links back to `[file p.N]`.
+
+This wasn't an arbitrary choice — it's inspired by Andrej Karpathy's **"RAG is dead"** framing: as
+context windows grow, the classic chunk → embed → vector-similarity pipeline becomes unnecessary
+machinery for any corpus that already fits in context. For a bounded, personal corpus like one
+course's materials, that turned out right: no vector DB to run, no relevance tuning, no retrieval
+drift — you get RAG's genuinely valuable output (cited, source-anchored answers) without the
+vector plumbing. The honest caveat: past ~600k chars it still needs lexical retrieval, so the
+claim isn't "retrieval is dead," it's "vector RAG is unnecessary for the common case."
+
+---
+
+## Try it
 
 **Deploy your own** (≈15 min; needs free Supabase + Gemini accounts):
 
