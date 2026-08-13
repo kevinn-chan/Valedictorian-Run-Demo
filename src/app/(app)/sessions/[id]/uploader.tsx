@@ -5,8 +5,17 @@ import { useRouter } from "next/navigation";
 import { Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-// Supabase Free per-file cap
+// Supabase Free per-file cap (also enforced server-side: storage bucket
+// file_size_limit in supabase/migrations/0008_upload_restrictions.sql)
 const MAX_BYTES = 50 * 1024 * 1024;
+
+// Browsers report inconsistent/empty MIME types for .md files — pick the type
+// explicitly from the extension so it matches the bucket's allowed_mime_types.
+function contentTypeFor(filename: string): string {
+  if (filename.endsWith(".pdf")) return "application/pdf";
+  if (filename.endsWith(".md")) return "text/markdown";
+  return "text/plain";
+}
 
 export function Uploader({ sessionId }: { sessionId: string }) {
   const router = useRouter();
@@ -34,7 +43,7 @@ export function Uploader({ sessionId }: { sessionId: string }) {
       // Browser → Supabase Storage directly; never touches Vercel (4.5 MB body limit)
       const { error: upErr } = await supabase.storage
         .from("session-files")
-        .upload(path, file);
+        .upload(path, file, { contentType: contentTypeFor(safeName) });
       if (upErr) {
         errs.push(`${file.name}: ${upErr.message}`);
         continue;
