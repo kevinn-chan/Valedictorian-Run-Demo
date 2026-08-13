@@ -13,7 +13,7 @@ single shared password.
 | Data isolation (Row-Level Security) | ✅ Solid — every table is scoped to `auth.uid()`; users cannot read each other's data, even by direct URL. |
 | Secret handling | ✅ Solid — only the Supabase URL + anon key reach the client; the service-role key and LLM keys are server-only; `.env*` is gitignored. |
 | **Authentication** | 🔸 **Shared-password gate** — real Supabase `signInWithPassword`, but both profiles share one password. Knowing the URL is no longer enough; fine for a small trusted group, not for open public signup. |
-| Rate limiting / cost controls | ⚠️ Minimal — one shared LLM key. The public `/demo` prefers a separate `DEMO_GEMINI_KEY`, but the main app has no per-user quota. |
+| Rate limiting / cost controls | 🔸 Basic — `/api/profile-login` is capped at 5 attempts/minute per IP. Still one shared LLM key; the public `/demo` prefers a separate `DEMO_GEMINI_KEY`, but the main app has no per-user quota. |
 
 ## The login model
 

@@ -349,7 +349,8 @@ export default async function SessionPage({
                     {f.ingest_status}
                   </span>
                   {(f.ingest_status === "pending" ||
-                    f.ingest_status === "error") && (
+                    f.ingest_status === "error" ||
+                    f.ingest_status === "processing") && (
                     <CompileButton fileId={f.id} />
                   )}
                   {f.ingest_status === "done" && (

@@ -55,10 +55,14 @@ export function Uploader({ sessionId }: { sessionId: string }) {
         errs.push(`${file.name}: ${dbErr?.message ?? "insert failed"}`);
         continue;
       }
-      // Kick off compilation; chip moves pending → processing → done on refresh
-      fetch(`/api/ingest/${row.id}`, { method: "POST" }).finally(() =>
-        router.refresh()
-      );
+      // Kick off compilation and wait for it before starting the next file —
+      // firing these concurrently for a multi-file batch floods the Gemini
+      // rate limit (20 req/min) and raises the odds a call runs long enough
+      // to hit Vercel's 300s maxDuration, which kills the function without
+      // running the route's catch block, leaving the file stuck "processing"
+      // forever. Chip moves pending → processing → done on refresh.
+      await fetch(`/api/ingest/${row.id}`, { method: "POST" });
+      router.refresh();
     }
 
     setBusy(null);
