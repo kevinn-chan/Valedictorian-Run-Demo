@@ -4,9 +4,53 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { llm } from "./llm.ts";
 import { rasterizePages, resolveFigureTopic } from "./figures.ts";
 
-// ponytail: inline PDF bytes in the request; switch to the Gemini Files API
-// if decks ever exceed ~15 MB (inline request ceiling is ~20 MB).
+// Gemini's inline-request ceiling is ~20 MB; under that we send raw bytes
+// (fast, no extra round trip). Above it we use the Files API (upload once,
+// reference by URI) up to the Storage bucket's own 50 MB cap.
 const MAX_INLINE_BYTES = 15 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
+
+// Resumable-upload the PDF to Gemini's Files API and return its file URI.
+// ponytail: no polling for ACTIVE state — Gemini processes PDFs synchronously,
+// unlike video/audio, so the file is usable immediately after upload.
+async function uploadToGeminiFiles(
+  bytes: Uint8Array,
+  mimeType: string,
+  displayName: string
+): Promise<string> {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY!;
+  const start = await fetch(
+    `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "X-Goog-Upload-Protocol": "resumable",
+        "X-Goog-Upload-Command": "start",
+        "X-Goog-Upload-Header-Content-Length": String(bytes.byteLength),
+        "X-Goog-Upload-Header-Content-Type": mimeType,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ file: { display_name: displayName } }),
+    }
+  );
+  const uploadUrl = start.headers.get("x-goog-upload-url");
+  if (!start.ok || !uploadUrl)
+    throw new Error(`Gemini file upload init failed: ${await start.text()}`);
+
+  const upload = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      "Content-Length": String(bytes.byteLength),
+      "X-Goog-Upload-Offset": "0",
+      "X-Goog-Upload-Command": "upload, finalize",
+    },
+    body: bytes as BodyInit,
+  });
+  if (!upload.ok)
+    throw new Error(`Gemini file upload failed: ${await upload.text()}`);
+  const { file } = (await upload.json()) as { file: { uri: string } };
+  return file.uri;
+}
 
 const CompileSchema = z.object({
   digest: z
@@ -174,10 +218,25 @@ export async function ingestFile(
     .from("session-files")
     .download(file.storage_path);
   if (dlErr || !blob) throw new Error(dlErr?.message ?? "download failed");
-  if (blob.size > MAX_INLINE_BYTES)
-    throw new Error("file too large to compile (>15 MB) — split the PDF");
+  if (blob.size > MAX_UPLOAD_BYTES)
+    throw new Error("file too large to compile (>50 MB) — split the PDF");
 
+  const mediaType = file.mime || "application/pdf";
   const bytes = new Uint8Array(await blob.arrayBuffer());
+  const filePart =
+    blob.size > MAX_INLINE_BYTES
+      ? {
+          type: "file" as const,
+          data: new URL(await uploadToGeminiFiles(bytes, mediaType, file.name)),
+          mediaType,
+          filename: file.name,
+        }
+      : {
+          type: "file" as const,
+          data: bytes,
+          mediaType,
+          filename: file.name,
+        };
 
   const { object } = await generateObject({
     model: llm(),
@@ -185,15 +244,7 @@ export async function ingestFile(
     messages: [
       {
         role: "user",
-        content: [
-          {
-            type: "file",
-            data: bytes,
-            mediaType: file.mime || "application/pdf",
-            filename: file.name,
-          },
-          { type: "text", text: COMPILE_PROMPT },
-        ],
+        content: [filePart, { type: "text", text: COMPILE_PROMPT }],
       },
     ],
   });
