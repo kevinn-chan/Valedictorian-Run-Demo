@@ -62,6 +62,38 @@ export async function setExamDate(formData: FormData) {
   revalidatePath("/");
 }
 
+export async function deleteFile(fileId: string) {
+  const supabase = await createClient();
+  const { data: file } = await supabase
+    .from("files")
+    .select("id, session_id, storage_path")
+    .eq("id", fileId)
+    .single();
+  if (!file) return;
+
+  // Figure images aren't FK-linked to storage, so they'd orphan otherwise —
+  // same slug-prefix convention ingestFile() uses to replace a file's wiki pages.
+  const fileTag = file.id.slice(0, 8);
+  const { data: figs } = await supabase
+    .from("figures")
+    .select("storage_path")
+    .eq("file_id", fileId);
+  await supabase.storage
+    .from("session-files")
+    .remove([file.storage_path, ...(figs ?? []).map((f) => f.storage_path)]);
+
+  await supabase
+    .from("wiki_pages")
+    .delete()
+    .eq("session_id", file.session_id)
+    .like("slug", `${fileTag}-%`);
+
+  // Row delete cascades chunks + figures rows (both FK'd to files.id).
+  await supabase.from("files").delete().eq("id", fileId);
+
+  revalidatePath(`/sessions/${file.session_id}`);
+}
+
 export async function deleteSession(formData: FormData) {
   const id = formData.get("id") as string;
   if (!id) return;

@@ -12,25 +12,12 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Uploader } from "./uploader";
-import { CompileButton } from "./compile-button";
+import { FileList } from "./file-list";
 import { CardsButton } from "./cards-button";
 import { StatusPoller } from "./status-poller";
 import { RenameTitle } from "./rename-title";
 import { ExamCountdown } from "./exam-countdown";
 import { ProgressBar, ProgressRing } from "@/components/ui-kit";
-
-const CHIP: Record<string, string> = {
-  pending: "bg-amber-500/15 text-amber-700",
-  processing: "bg-blue-500/15 text-blue-700",
-  done: "bg-emerald-500/15 text-emerald-700",
-  error: "bg-red-500/15 text-red-700",
-};
-
-function formatBytes(n: number | null) {
-  if (!n) return "";
-  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
-  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 export default async function SessionPage({
   params,
@@ -314,52 +301,7 @@ export default async function SessionPage({
           <div className="p-5">
             <Uploader sessionId={session.id} />
           </div>
-          {files && files.length > 0 && (
-            <ul className="border-t">
-              {files.map((f) => (
-                <li
-                  key={f.id}
-                  className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-secondary/30"
-                >
-                  {f.ingest_status === "done" ? (
-                    <Link
-                      href={`${base}/wiki/${f.id.slice(0, 8)}-digest`}
-                      prefetch={false}
-                      title="Open this file's digest"
-                      className="min-w-0 flex-1 basis-full truncate text-sm font-medium hover:text-primary sm:basis-auto"
-                    >
-                      {f.name}
-                    </Link>
-                  ) : (
-                    <span className="min-w-0 flex-1 basis-full truncate text-sm font-medium sm:basis-auto">
-                      {f.name}
-                    </span>
-                  )}
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    {f.pages ? `${f.pages} pages` : ""}
-                  </span>
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    {formatBytes(f.bytes)}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      CHIP[f.ingest_status] ?? CHIP.pending
-                    }`}
-                  >
-                    {f.ingest_status}
-                  </span>
-                  {(f.ingest_status === "pending" ||
-                    f.ingest_status === "error" ||
-                    f.ingest_status === "processing") && (
-                    <CompileButton fileId={f.id} />
-                  )}
-                  {f.ingest_status === "done" && (
-                    <CompileButton fileId={f.id} recompile />
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+          {files && files.length > 0 && <FileList files={files} base={base} />}
         </section>
 
         {topicPages && cardCount > 0 && (
