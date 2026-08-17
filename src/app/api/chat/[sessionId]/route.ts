@@ -41,6 +41,11 @@ export async function POST(
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  // No explicit sessionId-ownership check here: `supabase` is the cookie-scoped
+  // (RLS) client, not service-role, so every query below is already constrained
+  // by the owns_session() RLS policies (0001_init.sql) — a signed-in user simply
+  // gets empty results for a session they don't own.
+
   const { messages }: { messages: UIMessage[] } = await request.json();
   if (!messages?.length) {
     return NextResponse.json({ error: "no messages" }, { status: 400 });

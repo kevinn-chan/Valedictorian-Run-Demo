@@ -1,0 +1,13 @@
+-- Hotfix for a regression introduced by 0009/0010: revoking EXECUTE on
+-- owns_session() from `authenticated` broke every RLS policy that calls it
+-- (figures, chats, cards, messages, wiki_pages, quiz_results, and more use
+-- `using (public.owns_session(session_id))`). Unlike trigger functions,
+-- Postgres requires the querying role to have EXECUTE on any function
+-- referenced inside a policy's USING/WITH CHECK clause — confirmed live via
+-- a direct role-simulated query that failed with
+-- "permission denied for function owns_session" before this fix.
+--
+-- `authenticated` needs this back. `anon` does not — no legitimate anon-role
+-- query ever hits an owns_session()-gated table (auth.uid() is null for
+-- anon regardless, so the policy would just deny), so anon stays revoked.
+grant execute on function public.owns_session(uuid) to authenticated;

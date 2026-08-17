@@ -4,6 +4,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { buildContext, selectFigureImages } from "@/lib/answer";
 import { DEMO_SESSION_ID, demoReader } from "@/lib/demo";
 import { llm } from "@/lib/llm";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export const maxDuration = 60;
 
@@ -19,6 +20,16 @@ function demoModel() {
 export async function POST(request: NextRequest) {
   if (!DEMO_SESSION_ID) {
     return NextResponse.json({ error: "demo not configured" }, { status: 404 });
+  }
+
+  // Public, unauthenticated endpoint — cap requests per IP so one visitor
+  // can't drain the demo's Gemini quota. (Same limiter as /api/profile-login.)
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (isRateLimited(`demo-chat:${ip}`)) {
+    return NextResponse.json(
+      { error: "Too many requests — try again in a minute." },
+      { status: 429 }
+    );
   }
 
   const { messages }: { messages: UIMessage[] } = await request.json();
