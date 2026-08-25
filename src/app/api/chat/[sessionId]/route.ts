@@ -97,6 +97,8 @@ export async function POST(
 
   // Vision: attach the figure images relevant to this question so the model can
   // actually see the diagrams/graphs, still grounded in the same corpus.
+  // Images go on the user message, never into `system` — appending there would
+  // change the cached prefix and cost a full corpus re-read on every question.
   if (images.length) {
     const last = modelMessages.at(-1);
     if (last?.role === "user") {
@@ -105,8 +107,6 @@ export async function POST(
         : [{ type: "text" as const, text: String(last.content) }];
       last.content = [...content, ...images];
     }
-    system +=
-      "\n\nYou are also shown the actual figure images from pages in the corpus. Describe and explain them when relevant, still citing the page they came from.";
   }
 
   const result = streamText({

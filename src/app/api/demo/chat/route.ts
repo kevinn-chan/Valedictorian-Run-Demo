@@ -80,8 +80,6 @@ export async function POST(request: NextRequest) {
         : [{ type: "text" as const, text: String(last.content) }];
       last.content = [...content, ...images];
     }
-    system +=
-      "\n\nYou are also shown the actual figure images from pages in the corpus. Describe and explain them when relevant, still citing the page they came from.";
   }
 
   // Stream only — the demo never persists messages.

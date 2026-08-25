@@ -2,6 +2,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Tier A: whole compiled corpus in context (fits easily in Flash's 1M window
 // for typical sessions). Tier B: FTS-selected chunks + all topic summaries.
+//
+// The system prompt is byte-identical for every question in a session, so both
+// Gemini's and OpenAI's implicit prompt caching hit on the whole corpus — the
+// expensive part is billed and processed once, not per question. Two rules keep
+// that true: nothing question-specific may be appended to `system` (attach it to
+// the user message instead), and chunk order must be fully deterministic. Tier B
+// puts the stable topic summaries before the question's FTS hits for the same
+// reason — the prefix still caches even though the tail varies.
+// ponytail: implicit caching only, no explicit CachedContent objects — those need
+// TTL/lifecycle management for the same hit rate at this traffic.
 const TIER_A_MAX_CHARS = 600_000;
 
 export type ImagePart = { type: "image"; image: Uint8Array; mediaType: string };
@@ -97,7 +107,8 @@ export async function buildContext(
     .from("chunks")
     .select("page_from, page_to, text, files(name)")
     .eq("session_id", sessionId)
-    .order("page_from");
+    .order("page_from")
+    .order("id"); // deterministic tiebreak: same bytes every time, or the cache prefix misses
   if (error) throw new Error(error.message);
   const chunks = (data ?? []) as unknown as ChunkRow[];
   if (!chunks.length)
@@ -140,6 +151,7 @@ Rules:
 - Quote formulas and definitions exactly as they appear in the corpus, in plain text/Unicode (e.g. U = 1/(1+2a), W = 2^(k-1)) — never LaTeX delimiters like $...$ or \\text{}.
 - If the answer is not in the corpus, reply: "That isn't in your session materials." — optionally pointing to the closest related topic that IS covered. Never answer from outside knowledge.
 - Be a clear, calm study partner: direct answers first, then brief explanation.
+- When figure images are attached to a question, describe and explain them, still citing the page they came from.
 
 CORPUS:
 ${corpus}`;
