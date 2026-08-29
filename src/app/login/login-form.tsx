@@ -1,111 +1,85 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
-import { SHARED_PASSWORD_KEY } from "@/lib/shared-password";
-
-// Two-step sign-in: password first, then pick a profile — never both on screen
-// at once. The password stays in a controlled field and is submitted (as a hidden
-// input) together with the chosen profile index to /api/profile-login, so the
-// server contract is unchanged and the password is never persisted between steps.
 export function LoginForm({
   profiles,
   hadError,
 }: {
-  profiles: { name: string }[];
+  profiles: { name: string; email: string }[];
   hadError: boolean;
 }) {
-  const [step, setStep] = useState<"password" | "profile">("password");
-  const [password, setPassword] = useState("");
+  const [sent, setSent] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(hadError ? "Link expired or invalid — try again." : null);
+
+  async function sendLink(name: string, email: string) {
+    setSending(true);
+    setError(null);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/confirm` },
+    });
+    setSending(false);
+    if (error) {
+      setError(error.message);
+    } else {
+      setSent(name);
+    }
+  }
+
+  if (sent) {
+    return (
+      <>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Check your email</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          We sent a sign-in link to <span className="font-medium text-foreground">{sent}</span>'s email.
+          Click it to continue.
+        </p>
+        <button
+          type="button"
+          onClick={() => setSent(null)}
+          className="mt-8 text-xs text-muted-foreground transition hover:text-primary"
+        >
+          ← Pick a different profile
+        </button>
+      </>
+    );
+  }
 
   return (
     <>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-        {step === "password" ? "Sign in" : "Who's studying?"}
-      </h1>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight">Who's studying?</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {step === "password"
-          ? "Enter the shared password to continue."
-          : "Pick your profile."}
+        Pick your profile — we'll send a sign-in link to your email.
       </p>
 
-      <form
-        action="/api/profile-login"
-        method="post"
-        className="mt-8"
-        // Hand the shared password to this tab so the sidebar can re-submit it
-        // for a one-click profile switch. sessionStorage (not localStorage) —
-        // it survives the redirect to "/" and dies with the tab.
-        onSubmit={() => {
-          if (password) sessionStorage.setItem(SHARED_PASSWORD_KEY, password);
-        }}
-      >
-        {step === "password" ? (
-          <>
-            <input
-              type="password"
-              required
-              autoFocus
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && password) {
-                  e.preventDefault();
-                  setStep("profile");
-                }
-              }}
-              placeholder="Shared password"
-              className="h-11 w-full rounded-xl border border-border bg-card px-4 text-center text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-ring/25"
-            />
-            {hadError && (
-              <p className="mt-3 text-sm text-red-600">
-                Wrong password — try again.
-              </p>
-            )}
-            <button
-              type="button"
-              disabled={!password}
-              onClick={() => setStep("profile")}
-              className="mt-6 h-11 w-full rounded-xl bg-primary text-sm font-medium text-primary-foreground transition hover:bg-primary/90 active:scale-95 disabled:opacity-50"
+      <div className="mt-8 flex items-start justify-center gap-8">
+        {profiles.map((p) => (
+          <button
+            key={p.email}
+            type="button"
+            disabled={sending}
+            onClick={() => sendLink(p.name, p.email)}
+            className="group flex w-28 cursor-pointer flex-col items-center gap-3 disabled:opacity-50"
+          >
+            <span
+              className="flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-3xl font-semibold text-primary-foreground transition duration-200 group-hover:-translate-y-1 group-hover:ring-4 group-hover:ring-primary/30 group-active:scale-95"
+              style={{ boxShadow: "var(--shadow-soft-hover)" }}
             >
-              Continue
-            </button>
-          </>
-        ) : (
-          <>
-            <input type="hidden" name="password" value={password} />
-            <div className="flex items-start justify-center gap-8">
-              {profiles.map((p, i) => (
-                <button
-                  key={i}
-                  name="profile"
-                  value={i}
-                  type="submit"
-                  className="group flex w-28 cursor-pointer flex-col items-center gap-3"
-                >
-                  <span
-                    className="flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-3xl font-semibold text-primary-foreground transition duration-200 group-hover:-translate-y-1 group-hover:ring-4 group-hover:ring-primary/30 group-active:scale-95"
-                    style={{ boxShadow: "var(--shadow-soft-hover)" }}
-                  >
-                    {p.name.charAt(0).toUpperCase()}
-                  </span>
-                  <span className="text-sm font-medium text-muted-foreground transition group-hover:text-foreground">
-                    {p.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setStep("password")}
-              className="mt-8 text-xs text-muted-foreground transition hover:text-primary"
-            >
-              ← Use a different password
-            </button>
-          </>
-        )}
-      </form>
+              {p.name.charAt(0).toUpperCase()}
+            </span>
+            <span className="text-sm font-medium text-muted-foreground transition group-hover:text-foreground">
+              {p.name}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
+      {sending && <p className="mt-6 text-sm text-muted-foreground">Sending link…</p>}
     </>
   );
 }

@@ -2,8 +2,7 @@ import { getProfiles } from "@/lib/profiles";
 import { LoginForm } from "./login-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-// Sign-in gate: one shared password (real Supabase auth), then pick a profile.
-// Two steps — password first, profile second — handled in LoginForm.
+// Magic-link sign-in: pick a profile, receive a link in your email.
 export default async function LoginPage({
   searchParams,
 }: {
@@ -22,10 +21,10 @@ export default async function LoginPage({
           <span aria-hidden>●</span> Valedictorian Run
         </p>
 
-        {/* Names only — the type says {name} but RSC serializes whatever it's
-            given, so map the emails off before they cross to the client. */}
+        {/* Emails cross to the client for signInWithOtp — they're the users'
+            own addresses (allowlisted), not secrets. */}
         <LoginForm
-          profiles={profiles.map((p) => ({ name: p.name }))}
+          profiles={profiles.map((p) => ({ name: p.name, email: p.email }))}
           hadError={!!error}
         />
 

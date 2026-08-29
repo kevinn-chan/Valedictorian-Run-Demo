@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Public, unauthenticated endpoint — cap requests per IP so one visitor
-  // can't drain the demo's Gemini quota. (Same limiter as /api/profile-login.)
+  // can't drain the demo's Gemini quota. (Reuses the shared rate limiter.)
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (isRateLimited(`demo-chat:${ip}`)) {
     return NextResponse.json(

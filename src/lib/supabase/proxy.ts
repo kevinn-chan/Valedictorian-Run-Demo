@@ -6,7 +6,6 @@ const PUBLIC_PATHS = [
   "/login",
   "/auth",
   "/api/keepalive",
-  "/api/profile-login",
   "/demo",
   "/api/demo",
   "/api/figure", // route enforces its own access (own figures, or the demo session's)
