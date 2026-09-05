@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { llm } from "./llm.ts";
+import { llmLite } from "./llm.ts";
 
 export async function generatePlan(
   supabase: SupabaseClient,
@@ -22,7 +22,7 @@ export async function generatePlan(
     .join("\n\n");
 
   const { text } = await generateText({
-    model: llm(),
+    model: llmLite(),
     prompt: `You are a study coach. Today is ${today}. The exam is on ${examDate}.
 Student's goal: ${goal || "master all the material"}.
 

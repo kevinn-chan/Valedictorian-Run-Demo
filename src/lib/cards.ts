@@ -1,7 +1,7 @@
 import { generateObject } from "ai";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { llm } from "./llm.ts";
+import { llmLite } from "./llm.ts";
 
 const CardsSchema = z.object({
   cards: z.array(
@@ -42,7 +42,7 @@ export async function generateCards(
   const topicList = topics.map((t) => `- ${t.slug}: ${t.title}`).join("\n");
 
   const { object } = await generateObject({
-    model: llm(),
+    model: llmLite(),
     schema: CardsSchema,
     prompt: `Create spaced-repetition flashcards from this course corpus.
 
@@ -113,7 +113,7 @@ export async function generateTopicCards(
       : "Write 5 more cards: definitions, mechanisms, comparisons, or calculations not already covered below.";
 
   const { object } = await generateObject({
-    model: llm(),
+    model: llmLite(),
     schema: TopicCardsSchema,
     prompt: `Create spaced-repetition flashcards for one topic from a study wiki.
 

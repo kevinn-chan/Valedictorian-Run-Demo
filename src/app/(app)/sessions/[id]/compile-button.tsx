@@ -15,6 +15,7 @@ export function CompileButton({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   async function run() {
     if (
@@ -23,8 +24,13 @@ export function CompileButton({
     )
       return;
     setBusy(true);
+    setErr(null);
     router.refresh(); // show "processing" chip
-    await fetch(`/api/ingest/${fileId}`, { method: "POST" });
+    const res = await fetch(`/api/ingest/${fileId}`, { method: "POST" });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      setErr(body?.error ?? `compile failed (${res.status})`);
+    }
     setBusy(false);
     router.refresh();
   }
@@ -38,12 +44,19 @@ export function CompileButton({
       : "Compile";
 
   return (
-    <button
-      onClick={run}
-      disabled={busy}
-      className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
-    >
-      {label}
-    </button>
+    <span className="flex items-center gap-2">
+      {err && (
+        <span className="max-w-[28rem] truncate text-xs text-red-600" title={err}>
+          {err}
+        </span>
+      )}
+      <button
+        onClick={run}
+        disabled={busy}
+        className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
+      >
+        {label}
+      </button>
+    </span>
   );
 }

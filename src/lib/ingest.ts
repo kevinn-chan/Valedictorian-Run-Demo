@@ -240,6 +240,10 @@ export async function ingestFile(
 
   const { object } = await generateObject({
     model: llm(),
+    // Gemini's free tier intermittently 503s ("high demand") and 429s (20 req/min);
+    // the SDK's default 3 attempts isn't enough to ride that out. 5 attempts of
+    // exponential backoff adds ~30s worst case, leaving room under maxDuration=300.
+    maxRetries: 4,
     schema: CompileSchema,
     messages: [
       {

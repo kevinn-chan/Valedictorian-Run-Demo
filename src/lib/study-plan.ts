@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { llm } from "./llm.ts";
+import { llmLite } from "./llm.ts";
 
 // Titles + mastery gaps, not full topic markdown — a per-session plan schedules
 // what to study within one course, this schedules WHICH courses when, so it
@@ -45,7 +45,7 @@ export async function generateStudyPlan(
     .join("\n\n");
 
   const { text } = await generateText({
-    model: llm(),
+    model: llmLite(),
     prompt: `You are a study coach helping a student juggling multiple courses at once. Today is ${today}.
 ${focus ? `This week's priority: ${focus}\n` : ""}
 Courses and their topics (mastery % is share of that topic's flashcards graded correctly twice; missing % means no cards yet):

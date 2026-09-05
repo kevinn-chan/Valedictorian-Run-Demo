@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { llm } from "./llm.ts";
+import { llmLite } from "./llm.ts";
 
 // Display-only — no DB write. One call per stuck card (only offered after
 // grading "Again"), not per review, so cost stays low.
@@ -16,7 +16,7 @@ export async function generateMnemonic(
   if (!card) throw new Error("Card not found");
 
   const { text } = await generateText({
-    model: llm(),
+    model: llmLite(),
     prompt: `A student keeps forgetting this flashcard:
 
 Q: ${card.front}
