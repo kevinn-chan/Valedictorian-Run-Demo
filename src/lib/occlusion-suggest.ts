@@ -1,7 +1,7 @@
 import { generateObject } from "ai";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { llm } from "./llm.ts";
+import { llmVision } from "./llm.ts";
 import { boxToRect, type Region } from "./occlusion.ts";
 
 // Server-only: asks the vision model to find the printed labels on a figure and
@@ -44,7 +44,7 @@ export async function suggestOcclusionRegions(
   const image = new Uint8Array(await blob.arrayBuffer());
 
   const { object } = await generateObject({
-    model: llm(),
+    model: llmVision(),
     schema: SuggestSchema,
     messages: [
       {
