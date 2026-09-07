@@ -20,6 +20,8 @@ const SYMBOLS: Record<string, string> = {
 // resolves inside-out. A macro whose argument itself contains braces beyond
 // two levels keeps its braces — acceptable; a real math renderer is the
 // upgrade path if formulas ever get more elaborate than a stats deck's.
+const ARG = String.raw`[^{}]*(?:\{[^{}]*\}[^{}]*)*`;
+
 const unwrapRepeatedly = (s: string, re: RegExp, replace: string) => {
   for (let i = 0; i < 4; i++) {
     const next = s.replace(re, replace);
@@ -32,6 +34,13 @@ const unwrapRepeatedly = (s: string, re: RegExp, replace: string) => {
 export function plainMath(text: string): string {
   let s = text;
 
+  // An escaped dollar is currency and must survive the delimiter pass, which
+  // would otherwise treat it as an opening $…$ and swallow the text after it.
+  // Unescaping it early has the same effect, so park it behind a sentinel.
+  const DOLLAR = "\u0000d\u0000";
+  s = s.replace(/\\\$/g, DOLLAR);
+  s = s.replace(/\\([%&#_])/g, "$1");
+
   // $x$ / $$x$$ delimiters — the original belt.
   s = s.replace(/\$\$?([^$\n]+?)\$\$?/g, "$1");
 
@@ -42,18 +51,15 @@ export function plainMath(text: string): string {
   for (let pass = 0; pass < 6; pass++) {
     const before = s;
     // \text{…}, \widehat{…} and friends: keep the contents, drop the wrapper.
-    s = unwrapRepeatedly(s, /\\(?:text|textbf|textit|mathrm|mathbf|mathit|mathcal|operatorname|widehat|widetilde|overline|underline)\s*\{([^{}]*)\}/g, "$1");
+    s = unwrapRepeatedly(s, new RegExp(String.raw`\\(?:text|textbf|textit|mathrm|mathbf|mathit|mathcal|operatorname|widehat|widetilde|overline|underline)\s*\{(${ARG})\}`, "g"), "$1");
     // \frac{a}{b} → (a)/(b); \sqrt{x} → √(x).
-    s = unwrapRepeatedly(s, /\\(?:d|t)?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, "($1)/($2)");
-    s = unwrapRepeatedly(s, /\\sqrt\s*\{([^{}]*)\}/g, "√($1)");
+    s = unwrapRepeatedly(s, new RegExp(String.raw`\\(?:d|t)?frac\s*\{(${ARG})\}\s*\{(${ARG})\}`, "g"), "($1)/($2)");
+    s = unwrapRepeatedly(s, new RegExp(String.raw`\\sqrt\s*\{(${ARG})\}`, "g"), "√($1)");
     // Accents: \hat{x} → x̂, \bar{x} → x̄ (combining marks).
-    s = unwrapRepeatedly(s, /\\hat\s*\{([^{}]*)\}/g, "$1̂");
-    s = unwrapRepeatedly(s, /\\bar\s*\{([^{}]*)\}/g, "$1̄");
+    s = unwrapRepeatedly(s, new RegExp(String.raw`\\hat\s*\{(${ARG})\}`, "g"), "$1̂");
+    s = unwrapRepeatedly(s, new RegExp(String.raw`\\bar\s*\{(${ARG})\}`, "g"), "$1̄");
     if (s === before) break;
   }
-
-  // \% \& \_ etc. are escaped punctuation, not macros.
-  s = s.replace(/\\([%&#_$])/g, "$1");
 
   // Sizing and spacing macros carry no meaning in plain text.
   s = s.replace(/\\(?:left|right|big|Big|bigg|Bigg|displaystyle|limits)\b/g, "");
@@ -67,6 +73,8 @@ export function plainMath(text: string): string {
   // Braces are left alone entirely. Set notation (U = {1, 2, …, N}) is real
   // prose, and even in `sum_{i=1}^N` the braces aid reading once the macros
   // are gone — stripping them made already-plain pages worse, not better.
+
+  s = s.replaceAll(DOLLAR, "$");
 
   // Tidy the double spaces the spacing macros leave behind, but only after a
   // non-space character: a leading run of spaces carries markdown list nesting,

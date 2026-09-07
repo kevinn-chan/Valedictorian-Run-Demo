@@ -1,7 +1,8 @@
 import { generateObject } from "ai";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { llmLite } from "./llm.ts";
+import { llm } from "./llm.ts";
+import { plainMath } from "./plain-math.ts";
 
 const CardsSchema = z.object({
   cards: z.array(
@@ -42,7 +43,7 @@ export async function generateCards(
   const topicList = topics.map((t) => `- ${t.slug}: ${t.title}`).join("\n");
 
   const { object } = await generateObject({
-    model: llmLite(),
+    model: llm(),
     schema: CardsSchema,
     prompt: `Create spaced-repetition flashcards from this course corpus.
 
@@ -64,8 +65,8 @@ Rules:
     object.cards.map((c) => ({
       session_id: sessionId,
       topic_slug: c.topic_slug,
-      front: c.front,
-      back: c.back,
+      front: plainMath(c.front),
+      back: plainMath(c.back),
       source_ref: { page: c.page },
     }))
   );
@@ -113,7 +114,7 @@ export async function generateTopicCards(
       : "Write 5 more cards: definitions, mechanisms, comparisons, or calculations not already covered below.";
 
   const { object } = await generateObject({
-    model: llmLite(),
+    model: llm(),
     schema: TopicCardsSchema,
     prompt: `Create spaced-repetition flashcards for one topic from a study wiki.
 
@@ -130,8 +131,8 @@ Answers must come only from the content above; each card cites the page number o
     object.cards.map((c) => ({
       session_id: sessionId,
       topic_slug: topicSlug,
-      front: c.front,
-      back: c.back,
+      front: plainMath(c.front),
+      back: plainMath(c.back),
       source_ref: { page: c.page },
     }))
   );

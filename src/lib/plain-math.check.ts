@@ -48,4 +48,14 @@ assert.equal(plainMath(prose), prose);
 // Code spans keep their braces.
 assert.equal(plainMath("use `{ a: 1 }` here"), "use `{ a: 1 }` here");
 
+// An escaped dollar is currency, not a delimiter — it must not swallow the
+// text after it or leave its backslash behind.
+assert.equal(
+  plainMath("given min = \\$12,000 and max = \\$98,000."),
+  "given min = $12,000 and max = $98,000."
+);
+// A macro argument may itself contain braces (a subscript inside a fraction).
+assert.equal(plainMath("\\frac{v_{old} - m}{s}"), "(v_{old} - m)/(s)");
+assert.equal(plainMath("\\sqrt{x_{i}^2}"), "√(x_{i}^2)");
+
 console.log("plain-math.check: all assertions passed");
