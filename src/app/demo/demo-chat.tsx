@@ -4,17 +4,12 @@ import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import ReactMarkdown from "react-markdown";
-
-function stripLatex(text: string) {
-  return text
-    .replace(/\$\$?([^$\n]+?)\$\$?/g, "$1")
-    .replace(/\\text\{([^}]*)\}/g, "$1");
-}
+import { plainMath } from "@/lib/plain-math";
 
 // Render "[file p.N]" citations as small chips (plain — the source PDFs are
 // private, so demo citations don't link out).
 function AssistantMessage({ text }: { text: string }) {
-  const chipped = stripLatex(text).replace(
+  const chipped = plainMath(text).replace(
     /\[([^\[\]]{2,80}?)\s+p\.?\s*(\d+)(?:\s*[,–-]\s*\d+)*\]/g,
     (_m, name: string, page: string) => `\`${name} p.${page}\``
   );

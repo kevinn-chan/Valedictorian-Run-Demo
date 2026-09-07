@@ -21,10 +21,11 @@ export default async function LoginPage({
           <span aria-hidden>●</span> Valedictorian Run
         </p>
 
-        {/* Emails cross to the client for signInWithOtp — they're the users'
-            own addresses (allowlisted), not secrets. */}
+        {/* Names only. Anything handed to a client component lands in the RSC
+            payload of this PUBLIC page — emails included, which is how they
+            leaked before. The form posts an index to /api/send-link instead. */}
         <LoginForm
-          profiles={profiles.map((p) => ({ name: p.name, email: p.email }))}
+          profiles={profiles.map((p) => p.name)}
           hadError={!!error}
         />
 

@@ -4,18 +4,13 @@ import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import ReactMarkdown from "react-markdown";
+import { plainMath } from "@/lib/plain-math";
 
 interface FileRef {
   id: string;
   name: string;
 }
 
-// Belt for the system prompt's no-LaTeX rule.
-function stripLatex(text: string) {
-  return text
-    .replace(/\$\$?([^$\n]+?)\$\$?/g, "$1")
-    .replace(/\\text\{([^}]*)\}/g, "$1");
-}
 
 // Turns "[filename p.N]" citations into markdown links so they render as
 // chips (via the `a` component below) that open the PDF at that page.
@@ -59,7 +54,7 @@ function AssistantMessage({
           ),
         }}
       >
-        {linkifyCitations(stripLatex(text), files)}
+        {linkifyCitations(plainMath(text), files)}
       </ReactMarkdown>
     </div>
   );

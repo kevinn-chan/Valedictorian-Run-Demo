@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { llm } from "./llm.ts";
 import { rasterizePages, resolveFigureTopic } from "./figures.ts";
+import { plainMath } from "./plain-math.ts";
 
 // Gemini's inline-request ceiling is ~20 MB; under that we send raw bytes
 // (fast, no extra round trip). Above it we use the Files API (upload once,
@@ -128,9 +129,9 @@ const COMPILE_PROMPT = `You are compiling a student's course file into a corpus 
 Write formulas in plain text/Unicode (e.g. U = 1/(1+2a), W = 2^(k-1)) — never LaTeX delimiters like $...$.
 Do not invent content that is not in the document.`;
 
-// Belt for the prompt's no-LaTeX rule: strip $...$ / $$...$$ delimiters the
-// model sneaks in anyway (wiki-facing markdown only; chunks stay verbatim).
-const stripLatex = (s: string) => s.replace(/\$\$?([^$\n]+?)\$\$?/g, "$1");
+// Belt for the prompt's no-LaTeX rule (wiki-facing markdown only; chunks stay
+// verbatim). See plain-math.ts — delimiters alone weren't enough, the models
+// emit bare macros too.
 
 // Recompile-safe card re-tagging. On recompile the LLM redraws topic slugs, so a
 // card's stored topic_slug no longer matches any topic (it orphans → Ungrouped).
@@ -279,7 +280,7 @@ export async function ingestFile(
       slug: `${fileTag}-digest`,
       kind: "file_digest",
       title: file.name,
-      markdown: stripLatex(object.digest),
+      markdown: plainMath(object.digest),
       source_refs: { file_id: file.id },
     },
     ...object.topics.map((t) => ({
@@ -287,7 +288,7 @@ export async function ingestFile(
       slug: `${fileTag}-${t.slug}`,
       kind: "topic",
       title: t.title,
-      markdown: stripLatex(t.summary),
+      markdown: plainMath(t.summary),
       source_refs: { file_id: file.id, pages: t.pages },
     })),
   ];

@@ -4,6 +4,7 @@ import { getProfiles } from "@/lib/profiles";
 
 const PUBLIC_PATHS = [
   "/login",
+  "/api/send-link", // the login form calls it before anyone is signed in
   "/auth",
   "/api/keepalive",
   "/demo",
