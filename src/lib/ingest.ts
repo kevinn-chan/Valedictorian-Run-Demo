@@ -411,7 +411,10 @@ async function ingestFigures(
     }
 
     const fields = {
-      caption: meta?.caption ?? null,
+      // Captions render as plain text (alt text, the occlusion picker), so they
+      // need the same LaTeX pass as the wiki — three live captions read
+      // "e_i = y_i - \hat{y}_i" before this.
+      caption: meta?.caption ? plainMath(meta.caption) : null,
       topic_slug: meta ? resolveFigureTopic(object.topics, fileTag, meta) : null,
       kind: meta?.kind ?? null,
       width: r.width,

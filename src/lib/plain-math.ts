@@ -22,6 +22,14 @@ const SYMBOLS: Record<string, string> = {
 // upgrade path if formulas ever get more elaborate than a stats deck's.
 const ARG = String.raw`[^{}]*(?:\{[^{}]*\}[^{}]*)*`;
 
+// `\frac{1}{n}` reads better as `1/n` than `(1)/(n)`. Parenthesise an operand
+// only when it would otherwise be ambiguous — i.e. it carries a top-level
+// space or operator once bracketed groups are set aside.
+const wrap = (x: string) => {
+  const bare = x.replace(/\([^()]*\)/g, "").trim();
+  return /[\s+\-±=]/.test(bare) ? `(${x.trim()})` : x.trim();
+};
+
 const unwrapRepeatedly = (s: string, re: RegExp, replace: string) => {
   for (let i = 0; i < 4; i++) {
     const next = s.replace(re, replace);
@@ -51,10 +59,11 @@ export function plainMath(text: string): string {
   for (let pass = 0; pass < 6; pass++) {
     const before = s;
     // \text{…}, \widehat{…} and friends: keep the contents, drop the wrapper.
-    s = unwrapRepeatedly(s, new RegExp(String.raw`\\(?:text|textbf|textit|mathrm|mathbf|mathit|mathcal|operatorname|widehat|widetilde|overline|underline)\s*\{(${ARG})\}`, "g"), "$1");
+    s = unwrapRepeatedly(s, new RegExp(String.raw`\\?(?:text|textbf|textit|mathrm|mathbf|mathit|mathcal|operatorname|widehat|widetilde|overline|underline|mathbb|mathsf|mathtt|boldsymbol)\s*\{(${ARG})\}`, "g"), "$1");
     // \frac{a}{b} → (a)/(b); \sqrt{x} → √(x).
-    s = unwrapRepeatedly(s, new RegExp(String.raw`\\(?:d|t)?frac\s*\{(${ARG})\}\s*\{(${ARG})\}`, "g"), "($1)/($2)");
-    s = unwrapRepeatedly(s, new RegExp(String.raw`\\sqrt\s*\{(${ARG})\}`, "g"), "√($1)");
+    s = s.replace(new RegExp(String.raw`\\?(?:d|t)?frac\s*\{(${ARG})\}\s*\{(${ARG})\}`, "g"),
+      (_m: string, a: string, b: string) => `${wrap(a)}/${wrap(b)}`);
+    s = s.replace(new RegExp(String.raw`\\?sqrt\s*\{(${ARG})\}`, "g"), "√($1)");
     // Accents: \hat{x} → x̂, \bar{x} → x̄ (combining marks).
     s = unwrapRepeatedly(s, new RegExp(String.raw`\\hat\s*\{(${ARG})\}`, "g"), "$1̂");
     s = unwrapRepeatedly(s, new RegExp(String.raw`\\bar\s*\{(${ARG})\}`, "g"), "$1̄");
@@ -62,7 +71,8 @@ export function plainMath(text: string): string {
   }
 
   // Sizing and spacing macros carry no meaning in plain text.
-  s = s.replace(/\\(?:left|right|big|Big|bigg|Bigg|displaystyle|limits)\b/g, "");
+  s = s.replace(/\\(?:left|right|big|Big|bigg|Bigg|displaystyle|limits|nonumber|notag)\b/g, "");
+  s = s.replace(/\\(?:quad|qquad)\b/g, " ");
   s = s.replace(/\\[,;:!> ]/g, " ");
 
   // Named symbols → Unicode.

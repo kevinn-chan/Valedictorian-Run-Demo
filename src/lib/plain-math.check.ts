@@ -5,11 +5,11 @@ import { plainMath } from "./plain-math.ts";
 // The exact strings that were rendering as literal macros in the live wiki.
 assert.equal(
   plainMath("The probability of interest is \\Pr(R \\mid Z) = \\frac{\\Pr(Z \\cap R)}{\\Pr(Z)}."),
-  "The probability of interest is Pr(R | Z) = (Pr(Z ∩ R))/(Pr(Z))."
+  "The probability of interest is Pr(R | Z) = Pr(Z ∩ R)/Pr(Z)."
 );
 assert.equal(
   plainMath("\\Pr(A \\mid B) = \\frac{\\Pr(A \\cap B)}{\\Pr(B)}"),
-  "Pr(A | B) = (Pr(A ∩ B))/(Pr(B))"
+  "Pr(A | B) = Pr(A ∩ B)/Pr(B)"
 );
 
 // Delimiters (the original belt) still work.
@@ -18,13 +18,13 @@ assert.equal(plainMath("$$E = mc^2$$"), "E = mc^2");
 
 // Wrappers, roots, accents, sizing, spacing.
 assert.equal(plainMath("\\text{Var}(X) \\geq 0"), "Var(X) ≥ 0");
-assert.equal(plainMath("s = \\sqrt{\\frac{1}{n}}"), "s = √((1)/(n))");
+assert.equal(plainMath("s = \\sqrt{\\frac{1}{n}}"), "s = √(1/n)");
 assert.equal(plainMath("\\hat{p} and \\bar{x}"), "p̂ and x̄");
 assert.equal(plainMath("\\left(\\sigma^2\\right)"), "(σ^2)");
 assert.equal(plainMath("n \\, \\times \\, k"), "n × k");
 
 // Nested \frac resolves inside-out.
-assert.equal(plainMath("\\frac{\\frac{a}{b}}{c}"), "((a)/(b))/(c)");
+assert.equal(plainMath("\\frac{\\frac{a}{b}}{c}"), "a/b/c");
 
 // An unknown macro degrades to its bare name rather than staying a macro.
 assert.equal(plainMath("\\wibble x"), "wibble x");
@@ -55,7 +55,18 @@ assert.equal(
   "given min = $12,000 and max = $98,000."
 );
 // A macro argument may itself contain braces (a subscript inside a fraction).
-assert.equal(plainMath("\\frac{v_{old} - m}{s}"), "(v_{old} - m)/(s)");
+assert.equal(plainMath("\\frac{v_{old} - m}{s}"), "(v_{old} - m)/s");
 assert.equal(plainMath("\\sqrt{x_{i}^2}"), "√(x_{i}^2)");
+
+// Simple operands stay bare; compound ones keep their parentheses.
+assert.equal(plainMath("\\frac{n}{N}"), "n/N");
+assert.equal(plainMath("\\frac{S^2}{n}"), "S^2/n");
+assert.equal(plainMath("\\frac{1}{N - 1}"), "1/(N - 1)");
+// A macro orphaned by an earlier pass (backslash already stripped) still converts.
+assert.equal(plainMath("frac{1}{n} and sqrt{x}"), "1/n and √(x)");
+
+// Spacing and blackboard-bold macros carry no meaning in plain text.
+assert.equal(plainMath("a = b \\quad unless c"), "a = b unless c");
+assert.equal(plainMath("m(X) = \\mathbb{E}[Y | X]"), "m(X) = E[Y | X]");
 
 console.log("plain-math.check: all assertions passed");
