@@ -118,7 +118,7 @@ const CompileSchema = z.object({
 
 const COMPILE_PROMPT = `You are compiling a student's course file into a corpus library they will study from INSTEAD of re-reading the original deck.
 1. "chunks": cover every page in order (spans of 1-3 pages). Transcribe ALL text content — every heading, bullet, definition, formula, and caption; the corpus must contain every word of the document. Describe figures/diagrams briefly in [brackets].
-2. "topics": the distinct concepts taught. Each summary is a STUDY-READY wiki page in markdown, roughly 200-500 words:
+2. "topics": the distinct concepts taught, at roughly ONE TOPIC PER 4-6 PAGES of the document — a 40-page deck yields 7-10 topics, never 2 or 3. When a concept has distinct parts (definition vs. procedure vs. diagnostics), split it rather than merging: the student navigates and tracks mastery per topic, so a coarse wiki is a worse wiki. Each summary is a STUDY-READY wiki page in markdown, roughly 200-500 words:
    - open with a 1-2 sentence overview of what the topic is and why it matters
    - "## Key ideas" — the mechanism/behaviour explained precisely, step by step where the source does
    - "## Formulas & facts" — every formula, bound, and constant from the source with each symbol defined (omit the section only if the topic has none)
