@@ -27,6 +27,13 @@ export default async function DueTodayPage() {
         .eq("kind", "topic"),
     ]);
 
+  // The queue is capped (see .limit above); the dashboard counts every due
+  // card, so the two screens disagreed once a deck got big.
+  const now = Date.now();
+  const dueTotal = (allCards ?? []).filter(
+    (c) => new Date(c.due_at).getTime() <= now
+  ).length;
+
   const cards = sortByWeakness(
     (due ?? []).map((c) => ({
       id: c.id,
@@ -52,9 +59,13 @@ export default async function DueTodayPage() {
         back="/"
         backLabel="Dashboard"
         title="Due today"
-        description="Every card due across your sessions, in one queue."
+        description={
+          dueTotal > cards.length
+            ? `Every card due across your sessions, in one queue — ${cards.length} at a time.`
+            : "Every card due across your sessions, in one queue."
+        }
       />
-      <ReviewClient cards={cards} />
+      <ReviewClient cards={cards} dueTotal={dueTotal} />
     </main>
   );
 }

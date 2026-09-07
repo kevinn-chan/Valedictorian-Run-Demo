@@ -32,9 +32,14 @@ function intervalLabel(card: Card, g: Grade) {
 export function ReviewClient({
   sessionId,
   cards,
+  dueTotal,
 }: {
   sessionId?: string; // omitted in the cross-session "due today" queue
   cards: Card[];
+  // Every card actually due, when that exceeds this session's capped queue —
+  // "100 remaining" against a dashboard reading 300 looks like a bug, and a
+  // student who clears the queue would think they were done.
+  dueTotal?: number;
 }) {
   const [queue, setQueue] = useState(cards);
   const [flipped, setFlipped] = useState(false);
@@ -229,7 +234,12 @@ export function ReviewClient({
       <div className="mb-5">
         <div className="flex items-center justify-between text-xs tabular-nums text-muted-foreground">
           <span>{reviewed} reviewed</span>
-          <span>{queue.length} remaining</span>
+          <span>
+            {queue.length} remaining
+            {dueTotal && dueTotal > cards.length
+              ? ` · ${dueTotal} due today`
+              : ""}
+          </span>
         </div>
         <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
           <div
