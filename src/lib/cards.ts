@@ -42,6 +42,10 @@ export async function generateCards(
     .join("\n\n");
   const topicList = topics.map((t) => `- ${t.slug}: ${t.title}`).join("\n");
 
+  // The "4-8 cards per topic" wording bound no model: pinned A/B on one model,
+  // same corpus, it produced 53 cards with every one of the 44 topics under the
+  // floor. Naming the topic count and the arithmetic floor produced 176 cards
+  // with 43/44 topics at or above it. Prompt >> model choice here.
   const { object } = await generateObject({
     model: llm(),
     schema: CardsSchema,
@@ -54,9 +58,11 @@ Corpus (page-labeled):
 ${corpus}
 
 Rules:
-- 4-8 cards per topic: definitions, mechanisms, comparisons, and any formulas/calculations.
+- Work through the topic list IN ORDER and emit AT LEAST 4 cards for every one of the ${topics.length} topics before you stop — ${topics.length * 4} cards is the floor, not the target. Do not skip a topic because it seems minor.
+- Per topic, cover: the definition, the mechanism or procedure, at least one comparison or trade-off, and every formula/calculation the corpus gives for it.
 - Answers must come ONLY from the corpus; each card cites the page number where its answer appears.
-- Fronts are specific questions ("Why does Go-back-N discard out-of-order frames?"), never vague prompts ("Explain ARQ").`,
+- Fronts are specific questions ("Why does Go-back-N discard out-of-order frames?"), never vague prompts ("Explain ARQ").
+- Write formulas in plain text/Unicode (e.g. P(A|B) = P(A∩B)/P(B)) — never LaTeX macros or $...$ delimiters.`,
   });
 
   // Replace previous deck for the session (re-generation resets progress)
