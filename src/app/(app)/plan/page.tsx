@@ -3,6 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui-kit";
 import { StudyPlanForm } from "./study-plan-form";
 
+// A plan covers one week, so anything older than that is describing a week that
+// has already happened — and it keeps naming courses that may no longer exist.
+// Server-computed on a dynamic page: no `new Date()` reaches the client, which
+// is what caused the session-12 hydration mismatch.
+function staleDays(generatedAt: string): number {
+  return Math.floor((Date.now() - new Date(generatedAt).getTime()) / 86_400_000);
+}
+
 export default async function StudyPlanPage() {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
@@ -36,6 +44,12 @@ export default async function StudyPlanPage() {
       ) : (
         <>
           <StudyPlanForm initialFocus={(plan?.inputs as { focus?: string } | null)?.focus ?? ""} hasPlan={!!plan} />
+
+          {plan?.generated_at && staleDays(plan.generated_at) > 7 && (
+            <p className="mt-6 rounded-xl border border-amber-600/40 bg-amber-500/10 px-4 py-3 text-sm text-foreground">
+              {`This plan was generated ${staleDays(plan.generated_at)} days ago and covers a week that has passed — regenerate it for a current schedule. Courses you have since added or removed won't appear.`}
+            </p>
+          )}
 
           {plan ? (
             <article

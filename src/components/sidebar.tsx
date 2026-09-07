@@ -159,7 +159,7 @@ export function MobileBar({
         <Link
           href="/"
           prefetch={false}
-          className="flex items-center gap-2 text-sm font-semibold tracking-tight"
+          className="flex min-h-11 items-center gap-2 text-sm font-semibold tracking-tight"
         >
           <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <BookOpen className="size-3.5" />
@@ -172,13 +172,13 @@ export function MobileBar({
             <ProfileSwitcher
               profiles={profiles}
               currentName={profileName ?? null}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+              className="flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
             />
           )}
           <form action="/auth/signout" method="post">
             <button
               type="submit"
-              className="rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-lg px-2.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
             >
               Sign out
             </button>

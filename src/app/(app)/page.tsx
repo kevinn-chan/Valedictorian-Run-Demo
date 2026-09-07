@@ -156,7 +156,11 @@ export default async function Home() {
         </form>
       </div>
 
-      <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      {/* The single mobile track must be minmax(0,1fr), not the implicit `auto`:
+          an auto track is sized by its children's min-content, and the Weakest
+          topics card's `truncate` title contributes its full un-wrapped width,
+          which pushed the whole page 32px wider than a 375px viewport. */}
+      <div className="mt-7 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatTile

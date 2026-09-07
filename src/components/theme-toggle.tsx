@@ -22,7 +22,7 @@ export function ThemeToggle({ compact }: { compact?: boolean }) {
       <button
         onClick={toggle}
         aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-        className="rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+        className="inline-flex min-h-11 items-center justify-center rounded-lg px-2.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
       >
         {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
       </button>

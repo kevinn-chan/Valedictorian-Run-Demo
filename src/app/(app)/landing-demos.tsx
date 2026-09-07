@@ -74,9 +74,9 @@ export function MiniQuiz() {
                 state === "idle"
                   ? "border-border text-foreground hover:-translate-y-0.5 hover:border-primary/50"
                   : state === "right"
-                    ? "border-green-500 bg-green-50 font-medium text-green-800"
+                    ? "border-green-600 bg-green-500/10 font-medium text-green-700 dark:text-green-400"
                     : state === "wrong"
-                      ? "border-red-400 bg-red-50 text-red-700"
+                      ? "border-red-600 bg-red-500/10 text-red-700 dark:text-red-400"
                       : "border-border text-muted-foreground"
               }`}
             >

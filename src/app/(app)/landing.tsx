@@ -231,8 +231,8 @@ export function Landing() {
             <ul className="mt-6 space-y-4">
               {OBJECTIVES.map(({ Icon, text }) => (
                 <li key={text} className="flex items-start gap-3">
-                  <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-green-100">
-                    <BadgeCheck className="size-4 text-green-700" />
+                  <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-green-500/15">
+                    <BadgeCheck className="size-4 text-green-700 dark:text-green-400" />
                   </span>
                   <span className="text-sm leading-relaxed text-foreground">
                     {text}
