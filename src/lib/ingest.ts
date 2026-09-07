@@ -2,7 +2,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { llm } from "./llm.ts";
-import { rasterizePages, resolveFigureTopic } from "./figures.ts";
+import { countPdfPages, rasterizePages, resolveFigureTopic } from "./figures.ts";
 import { plainMath } from "./plain-math.ts";
 
 // Gemini's inline-request ceiling is ~20 MB; under that we send raw bytes
@@ -116,9 +116,18 @@ const CompileSchema = z.object({
     ),
 });
 
-const COMPILE_PROMPT = `You are compiling a student's course file into a corpus library they will study from INSTEAD of re-reading the original deck.
+// One topic per ~6 pages, capped: an 83-page deck asked for 14 topics came back
+// with no object at all — the transcription plus that many 200-500 word summaries
+// overruns the output budget. 12 is the most that has compiled reliably.
+const topicFloor = (pages: number) => Math.min(Math.ceil(pages / 6), 12);
+
+const compilePrompt = (pageCount: number | null) => `You are compiling a student's course file into a corpus library they will study from INSTEAD of re-reading the original deck.
 1. "chunks": cover every page in order (spans of 1-3 pages). Transcribe ALL text content — every heading, bullet, definition, formula, and caption; the corpus must contain every word of the document. Describe figures/diagrams briefly in [brackets].
-2. "topics": the distinct concepts taught, at roughly ONE TOPIC PER 4-6 PAGES of the document — a 40-page deck yields 7-10 topics, never 2 or 3. When a concept has distinct parts (definition vs. procedure vs. diagnostics), split it rather than merging: the student navigates and tracks mastery per topic, so a coarse wiki is a worse wiki. Each summary is a STUDY-READY wiki page in markdown, roughly 200-500 words:
+2. "topics": the distinct concepts taught.${
+  pageCount
+    ? ` This document has ${pageCount} pages, so produce AT LEAST ${topicFloor(pageCount)} topics — that number is the floor, not the target, and a compile with fewer is wrong.`
+    : " Aim for one topic per 4-6 pages of the document."
+} When a concept has distinct parts (definition vs. procedure vs. diagnostics), split it rather than merging: the student navigates and tracks mastery per topic, so a coarse wiki is a worse wiki. Each summary is a STUDY-READY wiki page in markdown, roughly 200-500 words:
    - open with a 1-2 sentence overview of what the topic is and why it matters
    - "## Key ideas" — the mechanism/behaviour explained precisely, step by step where the source does
    - "## Formulas & facts" — every formula, bound, and constant from the source with each symbol defined (omit the section only if the topic has none)
@@ -203,6 +212,24 @@ export async function ingestFile(
   supabase: SupabaseClient,
   fileId: string
 ): Promise<{ chunks: number; topics: number; figures: number }> {
+  try {
+    return await runIngest(supabase, fileId);
+  } catch (e) {
+    // The route's catch marks the row, but anything that bypasses it — a crash,
+    // the 300s function timeout, a direct call from a script — used to leave the
+    // file stuck on "processing" with no way to tell it from a live compile.
+    await supabase
+      .from("files")
+      .update({ ingest_status: "error" })
+      .eq("id", fileId);
+    throw e;
+  }
+}
+
+async function runIngest(
+  supabase: SupabaseClient,
+  fileId: string
+): Promise<{ chunks: number; topics: number; figures: number }> {
   const { data: file, error: fileErr } = await supabase
     .from("files")
     .select("id, session_id, storage_path, name, mime")
@@ -239,6 +266,11 @@ export async function ingestFile(
           filename: file.name,
         };
 
+  // Counting is local and cheap (mupdf is already loaded for figures); a
+  // model asked to do the arithmetic itself ignored the floor on 8 of 15 files.
+  const pageCount =
+    mediaType === "application/pdf" ? countPdfPages(bytes) : null;
+
   const { object } = await generateObject({
     model: llm(),
     // Gemini's free tier intermittently 503s ("high demand") and 429s (20 req/min);
@@ -249,7 +281,7 @@ export async function ingestFile(
     messages: [
       {
         role: "user",
-        content: [filePart, { type: "text", text: COMPILE_PROMPT }],
+        content: [filePart, { type: "text", text: compilePrompt(pageCount) }],
       },
     ],
   });

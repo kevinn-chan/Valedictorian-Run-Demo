@@ -25,6 +25,12 @@ export function resolveFigureTopic(
 // Rasterize the given 1-based PDF pages to compressed WebP. Figure pages only —
 // the caller decides which pages carry a figure worth keeping. Bad pages are
 // skipped (logged), never thrown: figures are an enhancement, not core.
+// Page count before the compile call, so the prompt can state the topic floor as
+// a number instead of asking the model to work it out (which it mostly didn't).
+export function countPdfPages(pdf: Uint8Array): number {
+  return mupdf.Document.openDocument(pdf, "application/pdf").countPages();
+}
+
 export async function rasterizePages(
   pdf: Uint8Array,
   pages: number[]
