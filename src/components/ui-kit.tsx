@@ -143,7 +143,7 @@ export function PageHeader({
       {back && (
         <Link
           href={back}
-          className="mb-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="mb-2 inline-flex min-h-6 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <span aria-hidden>←</span>
           {backLabel ?? "Back"}
@@ -224,7 +224,7 @@ export function CardCover({
         className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card to-transparent"
       />
       {page != null && (
-        <span className="absolute right-2 top-2 rounded-md bg-card/85 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground ring-1 ring-border backdrop-blur-sm">
+        <span className="absolute right-2 top-2 rounded-md bg-card px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-foreground/80 ring-1 ring-border backdrop-blur-sm">
           p.{page}
         </span>
       )}
@@ -369,7 +369,7 @@ export function ReviewHeatmap({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Flame
-            className={`size-4 ${streak > 0 ? "text-orange-500" : "text-muted-foreground"}`}
+            className={`size-4 ${streak > 0 ? "text-orange-500 dark:text-orange-400" : "text-muted-foreground"}`}
           />
           <span className="text-sm font-semibold">
             {streak} day{streak === 1 ? "" : "s"}
@@ -487,9 +487,10 @@ export function Forecast({ cards }: { cards: { due_at: string }[] }) {
   );
 }
 
-/** Read-only glance at the other profile's progress. Kevin/Tina already share
- * one password and can fully switch into each other's account in one click —
- * this isn't a privacy boundary, just a shortcut. */
+/** Read-only glance at the other profile's progress. Both profiles can switch
+ * fully into each other's account in one click (the profile switcher mints a
+ * magic-link token server-side), so this isn't a privacy boundary, just a
+ * shortcut. Sign-in itself is per-person magic links, not a shared password. */
 export function StudyBuddy({
   name,
   streak,
@@ -523,7 +524,7 @@ export function StudyBuddy({
           <div className="mt-3 flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Flame
-                className={`size-3.5 ${streak > 0 ? "text-orange-500" : ""}`}
+                className={`size-3.5 ${streak > 0 ? "text-orange-500 dark:text-orange-400" : ""}`}
               />
               {streak} day{streak === 1 ? "" : "s"}
             </span>

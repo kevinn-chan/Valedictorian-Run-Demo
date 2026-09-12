@@ -34,7 +34,7 @@ export function StudyPlanForm({ initialFocus, hasPlan }: { initialFocus: string;
           type="text"
           value={focus}
           onChange={(e) => setFocus(e.target.value)}
-          placeholder="This week's priority (optional) — e.g. cramming for Computer Organization"
+          placeholder="This week's priority (optional), e.g. cramming for Computer Organization"
           className="min-w-64 flex-1 rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
         />
         <button
@@ -47,10 +47,10 @@ export function StudyPlanForm({ initialFocus, hasPlan }: { initialFocus: string;
       </div>
       {busy && (
         <p className="text-xs text-muted-foreground">
-          Interleaving your courses by exam date and mastery gaps — up to a minute.
+          Interleaving your courses by exam date and mastery gaps. This takes up to a minute.
         </p>
       )}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
     </form>
   );
 }

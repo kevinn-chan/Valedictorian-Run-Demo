@@ -171,7 +171,7 @@ export default async function SessionPage({
       {compiling && <StatusPoller />}
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex min-h-6 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <span aria-hidden>←</span> All sessions
       </Link>
@@ -192,14 +192,14 @@ export default async function SessionPage({
             <p className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
               <a
                 href={`/api/export/${session.id}/wiki`}
-                className="transition-colors hover:text-foreground"
+                className="inline-flex min-h-6 items-center transition-colors hover:text-foreground"
               >
                 Export wiki
               </a>
               {cardCount > 0 && (
                 <a
                   href={`/api/export/${session.id}/cards`}
-                  className="transition-colors hover:text-foreground"
+                  className="inline-flex min-h-6 items-center transition-colors hover:text-foreground"
                 >
                   Export cards
                 </a>
@@ -231,7 +231,7 @@ export default async function SessionPage({
         <div className="mt-8 space-y-6">
           {isNewSession && (
             <p className="text-sm text-muted-foreground">
-              New session — start with{" "}
+              New session. Start with{" "}
               <span className="font-medium text-foreground">① Wiki</span>, then{" "}
               <span className="font-medium text-foreground">② Review</span>, then try a{" "}
               <span className="font-medium text-foreground">③ Mock exam</span>.
@@ -287,9 +287,9 @@ export default async function SessionPage({
         </div>
       )}
 
-      <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="mt-10 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <section
-          className="overflow-hidden rounded-2xl border bg-card"
+          className="min-w-0 overflow-hidden rounded-2xl border bg-card"
           style={{ boxShadow: "var(--shadow-soft)" }}
         >
           <div className="flex items-center justify-between gap-3 border-b px-5 py-3.5">
@@ -306,12 +306,12 @@ export default async function SessionPage({
 
         {topicPages && cardCount > 0 && (
           <aside
-            className="rounded-2xl border bg-card p-5"
+            className="min-w-0 rounded-2xl border bg-card p-5"
             style={{ boxShadow: "var(--shadow-soft)" }}
           >
             <h2 className="text-sm font-semibold">Topic mastery</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              From your review history — open one to revisit its notes.
+              From your review history. Open one to revisit its notes.
             </p>
             <ul className="mt-4 space-y-3">
               {topicPages
@@ -329,7 +329,7 @@ export default async function SessionPage({
                       <Link
                         href={`${base}/wiki/${t.slug}`}
                         prefetch={false}
-                        className="group block"
+                        className="group block min-h-6 py-0.5"
                       >
                         <div className="flex items-baseline justify-between gap-3">
                           <span className="min-w-0 flex-1 truncate text-sm transition-colors group-hover:text-primary">

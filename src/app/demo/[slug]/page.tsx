@@ -35,7 +35,7 @@ export default async function DemoWikiPage({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-5">
-        <Link href="/" className="text-sm font-semibold tracking-tight">
+        <Link href="/" className="inline-flex min-h-6 items-center text-sm font-semibold tracking-tight">
           <span className="text-primary">●</span> Valedictorian Run
         </Link>
         <div className="flex items-center gap-2">
@@ -52,11 +52,11 @@ export default async function DemoWikiPage({
       <main className="mx-auto w-full max-w-3xl px-6 pb-24">
         <Link
           href="/demo"
-          className="text-sm text-muted-foreground transition hover:text-primary"
+          className="inline-flex min-h-6 items-center text-sm text-muted-foreground transition hover:text-primary"
         >
           ← Sample course
         </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+        <h1 className="mt-1 break-words text-2xl font-semibold tracking-tight">
           {page.title}
         </h1>
         {pages && pages.length > 0 && (

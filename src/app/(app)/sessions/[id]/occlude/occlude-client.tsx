@@ -92,7 +92,7 @@ function Editor({
       }
       const found: Region[] = j?.regions ?? [];
       if (!found.length) {
-        setMsg("No labels detected — draw boxes manually.");
+        setMsg("No labels detected. Draw boxes manually.");
         return;
       }
       setRegions((prev) => {
@@ -103,7 +103,7 @@ function Editor({
           seen.add(key);
           return true;
         });
-        setMsg(`Suggested ${fresh.length} region${fresh.length === 1 ? "" : "s"} — review, edit, then save.`);
+        setMsg(`Suggested ${fresh.length} region${fresh.length === 1 ? "" : "s"}. Review, edit, then save.`);
         return [...prev, ...fresh];
       });
     } finally {
@@ -345,7 +345,7 @@ function Editor({
                       return next;
                     });
                   }}
-                  className="text-xs text-muted-foreground hover:text-red-600"
+                  className="text-xs text-muted-foreground hover:text-red-600 dark:text-red-400"
                 >
                   remove
                 </button>

@@ -50,7 +50,7 @@ export default async function ReviewPage({
         back={`/sessions/${id}`}
         backLabel={session.title}
         title="Review"
-        description="Grade yourself honestly — the schedule does the rest."
+        description="Grade yourself honestly. The schedule does the rest."
       />
       <ReviewClient sessionId={id} cards={cards} />
     </main>

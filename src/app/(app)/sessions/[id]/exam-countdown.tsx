@@ -71,7 +71,7 @@ export function ExamCountdown({
       className="flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm transition-colors hover:border-primary/30"
       suppressHydrationWarning
     >
-      <CalendarClock className={`size-4 ${diff <= 7 ? "text-red-500" : "text-primary"}`} />
+      <CalendarClock className="size-4 text-primary" />
       <span className="font-semibold tabular-nums" suppressHydrationWarning>
         {diff <= 0 ? "Today!" : `${diff}d`}
       </span>

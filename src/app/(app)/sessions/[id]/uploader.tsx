@@ -108,7 +108,7 @@ export function Uploader({ sessionId }: { sessionId: string }) {
           <span>Uploading {busy}…</span>
         ) : (
           <span>
-            Drop lecture PDFs, notes, or cheatsheets here — or{" "}
+            Drop lecture PDFs, notes, or cheatsheets here, or{" "}
             <span className="font-medium text-primary">browse</span>
           </span>
         )}
@@ -122,7 +122,7 @@ export function Uploader({ sessionId }: { sessionId: string }) {
         />
       </div>
       {errors.length > 0 && (
-        <ul className="mt-3 space-y-1 text-sm text-red-600">
+        <ul className="mt-3 space-y-1 text-sm text-red-600 dark:text-red-400">
           {errors.map((e) => (
             <li key={e}>{e}</li>
           ))}

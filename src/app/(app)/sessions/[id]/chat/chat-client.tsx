@@ -90,7 +90,7 @@ export function ChatClient({
           <div className="flex flex-col items-center pt-16 text-center">
             <p className="max-w-sm text-sm text-muted-foreground">
               Ask anything about your materials. Every answer cites the page it
-              came from — and if it isn&apos;t in your files, it says so
+              came from, and if it isn&apos;t in your files, it says so
               instead of guessing.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">

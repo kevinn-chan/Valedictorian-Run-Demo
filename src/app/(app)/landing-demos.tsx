@@ -9,7 +9,7 @@ export function FlipCard() {
   return (
     <button
       onClick={() => setFlipped((f) => !f)}
-      aria-label={flipped ? "Show question" : "Reveal answer"}
+      aria-expanded={flipped}
       className="group h-56 w-full cursor-pointer [perspective:1200px]"
     >
       <span
@@ -17,7 +17,7 @@ export function FlipCard() {
           flipped ? "[transform:rotateY(180deg)]" : ""
         }`}
       >
-        <span className="absolute inset-0 flex flex-col justify-between rounded-3xl border border-border bg-card p-6 text-left [backface-visibility:hidden]" style={{ boxShadow: "var(--shadow-soft)" }}>
+        <span aria-hidden={flipped} className="absolute inset-0 flex flex-col justify-between rounded-3xl border border-border bg-card p-6 text-left [backface-visibility:hidden]" style={{ boxShadow: "var(--shadow-soft)" }}>
           <span className="text-sm leading-relaxed text-foreground">
             What are the two types of transmission errors at the Data Link
             Layer?
@@ -27,12 +27,12 @@ export function FlipCard() {
             tap to flip
           </span>
         </span>
-        <span className="absolute inset-0 flex flex-col justify-between rounded-3xl bg-primary p-6 text-left [backface-visibility:hidden] [transform:rotateY(180deg)]" style={{ boxShadow: "var(--shadow-soft)" }}>
+        <span aria-hidden={!flipped} className="absolute inset-0 flex flex-col justify-between rounded-3xl bg-primary p-6 text-left [backface-visibility:hidden] [transform:rotateY(180deg)]" style={{ boxShadow: "var(--shadow-soft)" }}>
           <span className="text-sm leading-relaxed text-primary-foreground">
             Lost frames — never arrive at all — and damaged frames, received
             with bits in error.
           </span>
-          <span className="text-xs font-medium text-primary-foreground/70">
+          <span className="text-xs font-medium text-primary-foreground/85">
             straight from p. 2 of the deck
           </span>
         </span>
@@ -50,25 +50,30 @@ const OPTIONS = [
 
 export function MiniQuiz() {
   const [picked, setPicked] = useState<number | null>(null);
+  // A wrong answer used to disable every option permanently: the section that
+  // exists to build confidence handed you a miniature of the exam you are
+  // afraid of and then bolted the door. Wrong answers stay open, and the
+  // explanation is held back until it is an explanation rather than a spoiler.
+  const solved = picked !== null && OPTIONS[picked].correct;
   const done = picked !== null;
   return (
-    <div className="flex h-56 flex-col rounded-3xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-soft)" }}>
+    <div className="flex min-h-56 flex-col rounded-3xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-soft)" }}>
       <p className="text-sm leading-snug text-foreground">
         Max window size for Selective-Reject ARQ with k-bit sequence numbers?
       </p>
       <div className="mt-3 space-y-1.5">
         {OPTIONS.map((o, i) => {
-          const state = !done
-            ? "idle"
-            : o.correct
+          const state = solved
+            ? o.correct
               ? "right"
-              : picked === i
-                ? "wrong"
-                : "dim";
+              : "dim"
+            : picked === i
+              ? "wrong"
+              : "idle";
           return (
             <button
               key={o.label}
-              disabled={done}
+              disabled={solved}
               onClick={() => setPicked(i)}
               className={`flex w-full cursor-pointer items-center justify-between rounded-xl border px-3 py-1.5 text-left text-sm transition-all duration-200 ${
                 state === "idle"
@@ -88,12 +93,15 @@ export function MiniQuiz() {
         })}
       </div>
       <p
+        aria-hidden={!done}
+        aria-live="polite"
         className={`mt-auto pt-2 text-xs transition-opacity duration-300 ${
-          done ? "opacity-100" : "opacity-0"
+          done ? "visible opacity-100" : "invisible opacity-0"
         } text-muted-foreground`}
       >
-        The window halves so old frames can&apos;t masquerade as new ones —
-        p. 28.
+        {solved
+          ? "The window halves so old frames can't masquerade as new ones — p. 28."
+          : "Not that one. Have another go."}
       </p>
     </div>
   );

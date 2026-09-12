@@ -7,10 +7,10 @@ import { CompileButton } from "./compile-button";
 import { deleteFile } from "../../actions";
 
 const CHIP: Record<string, string> = {
-  pending: "bg-amber-500/15 text-amber-700",
-  processing: "bg-blue-500/15 text-blue-700",
-  done: "bg-emerald-500/15 text-emerald-700",
-  error: "bg-red-500/15 text-red-700",
+  pending: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  processing: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
+  done: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  error: "bg-red-500/15 text-red-700 dark:text-red-400",
 };
 
 function formatBytes(n: number | null) {
@@ -55,7 +55,7 @@ export function FileList({ files, base }: { files: FileRow[]; base: string }) {
               href={`${base}/wiki/${f.id.slice(0, 8)}-digest`}
               prefetch={false}
               title="Open this file's digest"
-              className="min-w-0 flex-1 basis-full truncate text-sm font-medium hover:text-primary sm:basis-auto"
+              className="flex min-h-6 min-w-0 flex-1 basis-full items-center truncate text-sm font-medium hover:text-primary sm:basis-auto"
             >
               {f.name}
             </Link>
@@ -85,7 +85,7 @@ export function FileList({ files, base }: { files: FileRow[]; base: string }) {
             type="button"
             aria-label={`Delete ${f.name}`}
             onClick={() => handleDelete(f)}
-            className="cursor-pointer rounded-md p-1.5 text-muted-foreground opacity-0 transition hover:bg-secondary hover:text-destructive group-hover:opacity-100"
+            className="cursor-pointer rounded-md p-1.5 text-muted-foreground opacity-0 transition hover:bg-secondary hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100"
           >
             <Trash2 className="size-3.5" />
           </button>

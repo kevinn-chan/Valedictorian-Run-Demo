@@ -7,9 +7,9 @@ import { LEECH_THRESHOLD } from "@/lib/srs";
 import { PageHeader, ProgressRing, Sparkline, StatTile } from "@/components/ui-kit";
 
 const STATUS = {
-  weak: { label: "Needs work", cls: "bg-red-500/12 text-red-700", bar: "bg-red-500" },
-  learning: { label: "Learning", cls: "bg-amber-500/15 text-amber-700", bar: "bg-amber-500" },
-  solid: { label: "Solid", cls: "bg-emerald-500/12 text-emerald-700", bar: "bg-emerald-500" },
+  weak: { label: "Needs work", cls: "bg-red-500/12 text-red-700 dark:text-red-400", bar: "bg-red-500" },
+  learning: { label: "Learning", cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400", bar: "bg-amber-500" },
+  solid: { label: "Solid", cls: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400", bar: "bg-emerald-500" },
   unstudied: { label: "Not started", cls: "bg-secondary text-muted-foreground", bar: "bg-muted-foreground/30" },
 } as const;
 
@@ -55,7 +55,7 @@ export default async function AnalyticsPage({
         back={`/sessions/${id}`}
         backLabel={session.title}
         title="Progress"
-        description="Where you're strong, where to focus next — from your reviews and mock exams."
+        description="Where you're strong and where to focus next, from your reviews and mock exams."
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -84,11 +84,11 @@ export default async function AnalyticsPage({
           </div>
 
           <section className="mt-6">
-            <h2 className="text-base font-semibold">Topics — weakest first</h2>
+            <h2 className="text-base font-semibold">Topics, weakest first</h2>
             {rows.length === 0 ? (
               <p className="mt-3 text-sm text-muted-foreground">
                 No flashcards yet.{" "}
-                <Link href={`/sessions/${id}`} className="font-medium text-primary hover:underline">
+                <Link href={`/sessions/${id}`} className="inline-flex min-h-6 items-center font-medium text-primary hover:underline">
                   Generate cards
                 </Link>{" "}
                 to see per-topic mastery.
@@ -103,7 +103,7 @@ export default async function AnalyticsPage({
                   return (
                     <li key={r.slug} className="rounded-xl px-4 py-3 transition-colors hover:bg-secondary/40">
                       <div className="flex items-center gap-3">
-                        <Link href={href} prefetch={false} className="min-w-0 flex-1 truncate text-sm font-medium hover:text-primary">
+                        <Link href={href} prefetch={false} className="flex min-h-6 min-w-0 flex-1 items-center truncate text-sm font-medium hover:text-primary">
                           {r.title}
                         </Link>
                         <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${s.cls}`}>
@@ -142,7 +142,7 @@ export default async function AnalyticsPage({
             return (
               <section className="mt-6">
                 <h2 className="text-base font-semibold text-red-700 dark:text-red-400">
-                  Leeches — {leeches.length} card{leeches.length === 1 ? "" : "s"} you keep forgetting
+                  Leeches: {leeches.length} card{leeches.length === 1 ? "" : "s"} you keep forgetting
                 </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Cards with {LEECH_THRESHOLD}+ lapses. Consider rephrasing, splitting, or asking whether you really need this fact.
@@ -162,7 +162,7 @@ export default async function AnalyticsPage({
                         <Link
                           href={`/sessions/${id}/wiki/${c.topic_slug}`}
                           prefetch={false}
-                          className="mt-1 text-xs text-muted-foreground hover:text-primary"
+                          className="mt-1 inline-flex min-h-6 items-center text-xs text-muted-foreground hover:text-primary"
                         >
                           {topicMap.get(c.topic_slug)}
                         </Link>
@@ -213,7 +213,7 @@ export default async function AnalyticsPage({
                     </div>
                   </div>
                   <div>
-                    <div className="text-2xl font-semibold tabular-nums tracking-tight text-emerald-600">
+                    <div className="text-2xl font-semibold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
                       {Math.round(trend.best * 100)}%
                     </div>
                     <div className="text-xs text-muted-foreground">best</div>
@@ -228,7 +228,7 @@ export default async function AnalyticsPage({
             ) : (
               <p className="mt-2 text-sm text-muted-foreground">
                 No attempts yet.{" "}
-                <Link href={`/sessions/${id}/quiz`} className="font-medium text-primary hover:underline">
+                <Link href={`/sessions/${id}/quiz`} className="inline-flex min-h-6 items-center font-medium text-primary hover:underline">
                   Take a mock exam
                 </Link>{" "}
                 to start tracking accuracy.

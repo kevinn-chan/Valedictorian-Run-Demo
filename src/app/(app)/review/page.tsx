@@ -61,7 +61,7 @@ export default async function DueTodayPage() {
         title="Due today"
         description={
           dueTotal > cards.length
-            ? `Every card due across your sessions, in one queue — ${cards.length} at a time.`
+            ? `Every card due across your sessions, in one queue, ${cards.length} at a time.`
             : "Every card due across your sessions, in one queue."
         }
       />

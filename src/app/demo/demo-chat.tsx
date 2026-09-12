@@ -36,7 +36,7 @@ export function DemoChat({ starters }: { starters: string[] }) {
         Ask this sample course anything
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Answers come only from the compiled notes — every claim carries its page.
+        Answers come only from the compiled notes, and every claim carries its page.
       </p>
 
       <div className="mt-4 space-y-4">
@@ -80,7 +80,7 @@ export function DemoChat({ starters }: { starters: string[] }) {
         )}
         {error && (
           <p className="text-xs text-muted-foreground">
-            The demo is popular right now — give it a moment and try again.
+            Something went wrong on our end. Give it a moment and try again.
           </p>
         )}
       </div>
@@ -97,6 +97,7 @@ export function DemoChat({ starters }: { starters: string[] }) {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          aria-label="Ask a question about this course"
           placeholder="Ask anything from the notes above…"
           className="h-11 flex-1 rounded-xl border border-border bg-background px-3.5 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-ring/25"
         />

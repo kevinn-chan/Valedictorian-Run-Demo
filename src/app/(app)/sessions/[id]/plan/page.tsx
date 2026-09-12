@@ -54,7 +54,7 @@ export default async function PlanPage({
         </article>
       ) : (
         <p className="mt-10 text-sm text-muted-foreground">
-          No plan yet. Set your exam date above and generate one — it schedules
+          No plan yet. Set your exam date above and generate one: it schedules
           only the topics that actually exist in your corpus wiki.
         </p>
       )}

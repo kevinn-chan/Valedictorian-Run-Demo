@@ -45,7 +45,7 @@ export function PlanForm({
           type="text"
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
-          placeholder="Goal — e.g. confident on all ARQ protocols"
+          placeholder="Goal, e.g. confident on all ARQ protocols"
           className="min-w-64 flex-1 rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
         />
         <input
@@ -69,10 +69,10 @@ export function PlanForm({
       </div>
       {busy && (
         <p className="text-xs text-muted-foreground">
-          Building your schedule from the corpus wiki — up to a minute.
+          Building your schedule from the corpus wiki. This takes up to a minute.
         </p>
       )}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
     </form>
   );
 }

@@ -42,6 +42,7 @@ export function ReviewClient({
   dueTotal?: number;
 }) {
   const [queue, setQueue] = useState(cards);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [reviewed, setReviewed] = useState(0);
   const [grades, setGrades] = useState({ again: 0, good: 0, easy: 0 });
@@ -84,21 +85,37 @@ export function ReviewClient({
   const grade = useCallback(
     async (g: "again" | "good" | "easy") => {
       if (!card || !flipped) return;
+      // The UI advances optimistically, so a failed save has to put everything
+      // back. Without this the grade is lost silently: the card leaves the
+      // queue, the counters move, and the server never hears about it, so the
+      // card's schedule and the screen disagree permanently.
+      const prevQueue = queue;
+      setSaveError(null);
       setFlipped(false);
       setReviewed((n) => n + 1);
       setGrades((prev) => ({ ...prev, [g]: prev[g] + 1 }));
       setQueue((q) => (g === "again" ? [...q.slice(1), card] : q.slice(1)));
-      const res = await fetch("/api/review", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cardId: card.id, grade: g }),
-      });
-      const data = await res.json();
-      if (data.prev) {
-        setLastGraded({ card, grade: g, prev: data.prev });
+      try {
+        const res = await fetch("/api/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cardId: card.id, grade: g }),
+        });
+        if (!res.ok) throw new Error(`review save failed (${res.status})`);
+        const data = await res.json();
+        if (data.prev) {
+          setLastGraded({ card, grade: g, prev: data.prev });
+        }
+      } catch {
+        setQueue(prevQueue);
+        setReviewed((n) => Math.max(0, n - 1));
+        setGrades((prev) => ({ ...prev, [g]: Math.max(0, prev[g] - 1) }));
+        setLastGraded(null);
+        setFlipped(true);
+        setSaveError("That grade didn't save, so the card is still here. Grade it again.");
       }
     },
-    [card, flipped]
+    [card, flipped, queue]
   );
 
   useEffect(() => {
@@ -193,7 +210,7 @@ export function ReviewClient({
     return (
       <div className="mt-12 flex flex-col items-center text-center animate-slide-up">
         <div className="flex size-16 items-center justify-center rounded-full bg-green-500/15">
-          <CheckCircle2 className="size-8 text-green-600" />
+          <CheckCircle2 className="size-8 text-green-600 dark:text-green-400" />
         </div>
         <h2 className="mt-4 text-xl font-semibold">
           {total ? "Session complete" : "Nothing due"}
@@ -277,7 +294,7 @@ export function ReviewClient({
           />
         )}
         {card.session_title && (
-          <p className="mb-3 text-xs font-medium text-primary/80">
+          <p className="mb-3 text-xs font-medium text-primary">
             {card.session_title}
           </p>
         )}
@@ -342,14 +359,23 @@ export function ReviewClient({
         )}
       </button>
 
+      {saveError && (
+        <p
+          role="alert"
+          className="mt-3 rounded-lg border border-red-200 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:border-red-500/30 dark:text-red-400"
+        >
+          {saveError}
+        </p>
+      )}
+
       {flipped ? (
         <div className="mt-3 flex gap-2 animate-slide-up">
           <button
             onClick={() => grade("again")}
-            className="btn-squish flex-1 rounded-lg border border-red-200 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-700 hover:bg-red-500/20"
+            className="btn-squish flex-1 rounded-lg border border-red-200 dark:border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-700 dark:text-red-400 hover:bg-red-500/20"
           >
             Again
-            <span className="ml-1.5 text-xs font-normal text-red-600/70">
+            <span className="ml-1.5 text-xs font-normal text-red-600/70 dark:text-red-400/70">
               1 · {intervalLabel(card, "again")}
             </span>
           </button>
@@ -364,10 +390,10 @@ export function ReviewClient({
           </button>
           <button
             onClick={() => grade("easy")}
-            className="btn-squish flex-1 rounded-lg border border-green-200 bg-green-500/10 px-3 py-2.5 text-sm font-medium text-green-700 hover:bg-green-500/20"
+            className="btn-squish flex-1 rounded-lg border border-green-200 dark:border-green-500/30 bg-green-500/10 px-3 py-2.5 text-sm font-medium text-green-700 dark:text-green-400 hover:bg-green-500/20"
           >
             Easy
-            <span className="ml-1.5 text-xs font-normal text-green-600/70">
+            <span className="ml-1.5 text-xs font-normal text-green-600/70 dark:text-green-400/70">
               3 · {intervalLabel(card, "easy")}
             </span>
           </button>

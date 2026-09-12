@@ -37,7 +37,7 @@ export default async function TeachPage({
         <TeachClient sessionId={id} topics={topics} />
       ) : (
         <p className="mt-8 text-sm text-muted-foreground">
-          Compile at least one file first — topics appear here once the corpus
+          Compile at least one file first. Topics appear here once the corpus
           is built.
         </p>
       )}

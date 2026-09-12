@@ -65,7 +65,7 @@ export function Sidebar({
             <Layers className="size-[18px]" />
             <span className="flex-1">Due today</span>
             {dueCount > 0 && (
-              <span className="rounded-full bg-primary/12 px-2 py-0.5 text-xs font-semibold tabular-nums text-primary group-aria-[current=page]:bg-white/20 group-aria-[current=page]:text-primary-foreground">
+              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-primary-strong group-aria-[current=page]:bg-black/20 dark:group-aria-[current=page]:bg-white/25 group-aria-[current=page]:text-primary-foreground">
                 {dueCount}
               </span>
             )}
@@ -159,14 +159,14 @@ export function MobileBar({
         <Link
           href="/"
           prefetch={false}
-          className="flex min-h-11 items-center gap-2 text-sm font-semibold tracking-tight"
+          className="flex min-w-0 min-h-11 shrink items-center gap-2 text-sm font-semibold tracking-tight"
         >
-          <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <BookOpen className="size-3.5" />
           </span>
-          Valedictorian
+          <span className="min-w-0 truncate">Valedictorian</span>
         </Link>
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           <ThemeToggle compact />
           {profiles && profiles.length > 0 && (
             <ProfileSwitcher

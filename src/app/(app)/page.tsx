@@ -141,7 +141,7 @@ export default async function Home() {
           <p className="mt-1.5 text-sm text-muted-foreground">
             {dueCount
               ? `${dueCount} card${dueCount === 1 ? "" : "s"} ready for review.`
-              : "Nothing due right now — you're all caught up."}
+              : "Nothing due right now. You're all caught up."}
           </p>
         </div>
         <form action="/search" method="get" className="w-full sm:w-72">
@@ -229,7 +229,7 @@ export default async function Home() {
                         <Link
                           href={`/sessions/${s.id}`}
                           prefetch={false}
-                          className="text-[15px] font-semibold leading-snug tracking-tight after:absolute after:inset-0 hover:text-primary"
+                          className="inline-flex min-h-6 items-center text-[15px] font-semibold leading-snug tracking-tight after:absolute after:inset-0 hover:text-primary"
                         >
                           {s.title}
                         </Link>
@@ -240,7 +240,7 @@ export default async function Home() {
                         </p>
                       </div>
                       {st.due > 0 && (
-                        <span className="relative z-10 shrink-0 rounded-full bg-primary/12 px-2.5 py-1 text-xs font-semibold tabular-nums text-primary">
+                        <span className="relative z-10 shrink-0 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold tabular-nums text-primary-strong">
                           {st.due} due
                         </span>
                       )}
@@ -284,7 +284,7 @@ export default async function Home() {
                 No study sessions yet
               </h3>
               <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted-foreground">
-                A session holds the full corpus for one course — lecture PDFs,
+                A session holds the full corpus for one course: lecture PDFs,
                 notes, cheatsheets. Create one and drop your files in.
               </p>
             </section>
@@ -313,7 +313,7 @@ export default async function Home() {
               {masteryPct >= 0.8
                 ? "You know this material. Keep it warm."
                 : masteryPct >= 0.4
-                  ? "Solid progress — keep going."
+                  ? "Solid progress. Keep going."
                   : "Early days. A few reviews a day compounds fast."}
             </p>
             {(() => {
@@ -354,7 +354,7 @@ export default async function Home() {
             >
               <h2 className="text-sm font-semibold">Weakest topics</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Across all sessions — review these first.
+                Across all sessions. Review these first.
               </p>
               <ul className="mt-3 space-y-2.5">
                 {weakestTopics.map((t) => (
@@ -362,7 +362,7 @@ export default async function Home() {
                     <Link
                       href={`/sessions/${t.sessionId}/wiki/${t.slug}`}
                       prefetch={false}
-                      className="group block"
+                      className="group block min-h-6 py-0.5"
                     >
                       <div className="flex items-baseline justify-between gap-2">
                         <span className="min-w-0 flex-1 truncate text-sm transition-colors group-hover:text-primary">

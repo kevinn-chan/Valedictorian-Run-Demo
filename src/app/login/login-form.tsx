@@ -11,7 +11,7 @@ export function LoginForm({
 }) {
   const [sent, setSent] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(hadError ? "Link expired or invalid — try again." : null);
+  const [error, setError] = useState<string | null>(hadError ? "That link expired or was already used. Try again." : null);
 
   // The server resolves the index to an address and sends the link — the
   // client never sees an email (see /api/send-link).
@@ -28,7 +28,7 @@ export function LoginForm({
       | null;
     setSending(false);
     if (!res.ok || !body?.ok) {
-      setError(body?.error ?? "Couldn't send the link — try again.");
+      setError(body?.error ?? "Couldn't send the link. Try again.");
     } else {
       setSent(name);
     }
@@ -57,7 +57,7 @@ export function LoginForm({
     <>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight">Who's studying?</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Pick your profile — we'll send a sign-in link to your email.
+        Pick your profile and we'll send a sign-in link to your email.
       </p>
 
       <div className="mt-8 flex items-start justify-center gap-8">
@@ -82,7 +82,7 @@ export function LoginForm({
         ))}
       </div>
 
-      {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-6 text-sm text-red-600 dark:text-red-400">{error}</p>}
       {sending && <p className="mt-6 text-sm text-muted-foreground">Sending link…</p>}
     </>
   );

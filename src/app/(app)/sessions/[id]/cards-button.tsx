@@ -40,7 +40,7 @@ export function CardsButton({
       >
         {busy ? "Generating cards…" : hasCards ? "Regenerate cards" : "Generate cue cards"}
       </button>
-      {error && <span className="ml-2 text-xs text-red-600">{error}</span>}
+      {error && <span className="ml-2 text-xs text-red-600 dark:text-red-400">{error}</span>}
     </span>
   );
 }
