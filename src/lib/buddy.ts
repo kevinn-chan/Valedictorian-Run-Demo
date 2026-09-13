@@ -10,8 +10,8 @@ export type BuddyStats = {
 };
 
 // Read-only aggregate stats for the other profile, via the service role —
-// not a privacy boundary (Kevin/Tina already share one password and can
-// fully switch into each other's account in one click), just saves the
+// not a privacy boundary (allowlisted profiles can already switch into each
+// other's account in one click via /api/switch-profile), just saves the
 // click. No RLS view needed: this only ever reads, never takes user input.
 export async function getBuddyStats(email: string): Promise<BuddyStats | null> {
   const service = createServiceClient(

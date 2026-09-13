@@ -65,21 +65,27 @@ claim isn't "retrieval is dead," it's "vector RAG is unnecessary for the common 
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkevinn-chan%2FValedictorian-Run-Demo&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ALLOWED_EMAILS,PROFILES,GOOGLE_GENERATIVE_AI_API_KEY&envDescription=Supabase%20project%20keys%2C%20allowlisted%20emails%2C%20and%20a%20Gemini%20API%20key)
 
-Then follow **[SETUP.md](SETUP.md)** for the Supabase project + running the migration in
-`supabase/migrations/`. Or run locally:
+Then follow **[SETUP.md](SETUP.md)**. It starts with a table of every placeholder you need
+to replace, then walks through the Supabase project, all 13 migrations in
+`supabase/migrations/`, magic-link email and redirect settings, and Vercel. Or run locally:
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in your Supabase + Gemini values
+cp .env.example .env.local   # replace every placeholder in .env.local — never in .env.example
 npm run dev                  # http://localhost:3000
 ```
 
-**A note on the login:** sign-in is a **single shared password** (real Supabase
-`signInWithPassword`) that then lets you pick either profile — built for a small, trusted
-group, not open public signup. The public **[`/demo`](https://valedictorian-run.vercel.app/demo)**
-above is how strangers try it without an account. See **[SECURITY.md](SECURITY.md)** for exactly
-what to change before an open multi-user deploy (per-user signup, drop the allowlist, per-user
-rate limits + bring-your-own API key).
+**You must replace:** your Supabase URL and keys, a Gemini API key, and the example emails and
+names in `ALLOWED_EMAILS` / `PROFILES` (plus the matching `allowed_emails` rows). Real values go
+only in `.env.local` and Vercel's Environment Variables; `.env*` is gitignored.
+
+**A note on the login:** sign-in uses **magic links**: pick a profile, receive a sign-in
+link by email, click it. Once signed in, anyone on the allowlist can switch into any other
+profile instantly (no second email), so it's built for a small, trusted group, not open
+public signup. The public **[`/demo`](https://valedictorian-run.vercel.app/demo)** above is how
+strangers try it without an account. See **[SECURITY.md](SECURITY.md)** for exactly what
+to change before an open multi-user deploy (remove profile switching, per-user signup, drop
+the allowlist, per-user quotas + bring-your-own API key).
 
 ---
 
