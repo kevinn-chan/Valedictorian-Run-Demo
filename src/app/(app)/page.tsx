@@ -408,6 +408,9 @@ export default async function Home() {
               <input
                 name="title"
                 required
+                // Whitespace-only names used to submit and silently do nothing.
+                pattern=".*\S.*"
+                title="Give the session a name"
                 placeholder="e.g. CS2040 Finals"
                 className="h-10 w-full rounded-xl border bg-background px-3.5 text-sm outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-ring/25"
               />

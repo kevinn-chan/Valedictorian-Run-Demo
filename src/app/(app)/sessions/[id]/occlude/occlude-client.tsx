@@ -30,6 +30,8 @@ export function OccludeClient({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`/api/figure/${f.id}`}
+              loading="lazy"
+              decoding="async"
               alt={f.caption ?? `figure p.${f.page}`}
               className="aspect-[4/3] w-full object-cover transition-transform duration-200 group-hover:scale-105"
             />
@@ -190,28 +192,41 @@ function Editor({
     setDraft(null);
   }
 
+  // Indices saved or mid-save, claimed synchronously. Clicking "Save all" while
+  // a label is focused fires its blur-save first; without a synchronous claim
+  // both requests sent the same region and it became two cards.
+  const claimed = useRef<Set<number>>(new Set());
+  const claim = (idxs: number[]) => {
+    const fresh = idxs.filter((i) => !claimed.current.has(i));
+    fresh.forEach((i) => claimed.current.add(i));
+    return fresh;
+  };
+  const release = (idxs: number[]) => idxs.forEach((i) => claimed.current.delete(i));
+
   // Auto-save a single region when its label blurs with text
   const saveOne = useCallback(
     async (idx: number) => {
       const r = regions[idx];
-      if (!r || !r.label.trim() || saved.has(idx)) return;
+      if (!r || !r.label.trim() || !claim([idx]).length) return;
       const res = await fetch(`/api/occlude/${sessionId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ figureId: figure.id, regions: [r] }),
-      });
-      if (res.ok) {
+      }).catch(() => null);
+      if (res?.ok) {
         setSaved((s) => new Set(s).add(idx));
         router.refresh();
+      } else {
+        release([idx]);
       }
     },
-    [regions, saved, sessionId, figure.id, router]
+    [regions, sessionId, figure.id, router]
   );
 
   async function saveAll() {
-    const unsaved = regions.filter((r, i) => r.label.trim() && !saved.has(i));
-    if (!unsaved.length) {
-      setMsg("Nothing new to save.");
+    const idxs = claim(regions.flatMap((r, i) => (r.label.trim() ? [i] : [])));
+    if (!idxs.length) {
+      setMsg("All labelled boxes are saved.");
       return;
     }
     setBusy(true);
@@ -219,17 +234,18 @@ function Editor({
     const res = await fetch(`/api/occlude/${sessionId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ figureId: figure.id, regions: unsaved }),
-    });
+      body: JSON.stringify({ figureId: figure.id, regions: idxs.map((i) => regions[i]) }),
+    }).catch(() => null);
     setBusy(false);
-    if (!res.ok) {
-      const j = await res.json().catch(() => null);
+    if (!res?.ok) {
+      release(idxs);
+      const j = await res?.json().catch(() => null);
       setMsg(j?.error ?? "Save failed.");
       return;
     }
     const { created } = await res.json();
-    const allSaved = new Set(regions.map((_, i) => i));
-    setSaved(allSaved);
+    // Only what was sent is saved — unlabelled boxes stay editable and removable.
+    setSaved((s) => new Set([...s, ...idxs]));
     router.refresh();
     setMsg(`Created ${created} card${created === 1 ? "" : "s"}.`);
   }
@@ -338,12 +354,14 @@ function Editor({
               {!saved.has(i) && (
                 <button
                   onClick={() => {
-                    setRegions((rs) => rs.filter((_, j) => j !== i));
-                    setSaved((s) => {
+                    const shift = (s: Set<number>) => {
                       const next = new Set<number>();
                       for (const v of s) if (v < i) next.add(v); else if (v > i) next.add(v - 1);
                       return next;
-                    });
+                    };
+                    setRegions((rs) => rs.filter((_, j) => j !== i));
+                    setSaved(shift);
+                    claimed.current = shift(claimed.current);
                   }}
                   className="text-xs text-muted-foreground hover:text-red-600 dark:text-red-400"
                 >

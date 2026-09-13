@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { PageViewer } from "./page-viewer";
+import { PageViewer } from "@/components/page-viewer";
 
 // ponytail: LLM prompt says "use Unicode, not LaTeX" but some slip through.
 // String replace at render beats adding remark-math + rehype-katex.

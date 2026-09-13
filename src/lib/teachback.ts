@@ -35,6 +35,8 @@ const GradeSchema = z.object({
 
 export type TeachbackGrade = z.infer<typeof GradeSchema> & {
   topicTitle: string;
+  // The topic's source file, so cited pages can open that file's page inline.
+  fileId: string | null;
 };
 
 export async function gradeTeachback(
@@ -51,12 +53,17 @@ export async function gradeTeachback(
     .single();
   if (!topic) throw new Error("topic not found");
 
-  const pages = (topic.source_refs as { pages?: number[] } | null)?.pages ?? [];
-  const { data: chunks } = await supabase
+  const refs = topic.source_refs as { pages?: number[]; file_id?: string } | null;
+  const pages = refs?.pages ?? [];
+  const fileId = refs?.file_id ?? null;
+  // Page numbers restart per file: scope to the topic's own file, or "p. 12"
+  // pulled in page 12 of every file in the session.
+  let chunkQuery = supabase
     .from("chunks")
     .select("page_from, page_to, text")
-    .eq("session_id", sessionId)
-    .order("page_from");
+    .eq("session_id", sessionId);
+  if (fileId) chunkQuery = chunkQuery.eq("file_id", fileId);
+  const { data: chunks } = await chunkQuery.order("page_from");
   const relevant =
     pages.length && chunks
       ? chunks.filter((c) => pages.some((p) => p >= c.page_from && p <= c.page_to))
@@ -87,5 +94,5 @@ Rules:
 - Plain-text formulas (2^(k-1)), never LaTeX.`,
   });
 
-  return { topicTitle: topic.title, ...object };
+  return { topicTitle: topic.title, fileId, ...object };
 }

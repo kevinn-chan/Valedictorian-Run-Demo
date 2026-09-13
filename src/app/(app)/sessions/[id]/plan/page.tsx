@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import ReactMarkdown from "react-markdown";
+import { PlanMarkdown } from "@/components/plan-markdown";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui-kit";
 import { PlanForm } from "./plan-form";
@@ -50,12 +50,13 @@ export default async function PlanPage({
           className="prose mt-8 max-w-none rounded-2xl border bg-card p-6 text-sm leading-relaxed sm:p-8 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_li]:my-1"
           style={{ boxShadow: "var(--shadow-soft)" }}
         >
-          <ReactMarkdown>{plan.markdown}</ReactMarkdown>
+          <PlanMarkdown markdown={plan.markdown} />
         </article>
       ) : (
         <p className="mt-10 text-sm text-muted-foreground">
-          No plan yet. Set your exam date above and generate one: it schedules
-          only the topics that actually exist in your corpus wiki.
+          No plan yet. Pick your exam date, add an optional goal, and generate
+          one: it schedules only the topics that actually exist in your corpus
+          wiki.
         </p>
       )}
     </main>

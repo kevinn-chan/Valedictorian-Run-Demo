@@ -17,7 +17,7 @@ export function DeleteButton({ title }: { title: string }) {
         )
           e.preventDefault();
       }}
-      className="cursor-pointer rounded-md p-2 text-muted-foreground opacity-0 transition hover:bg-secondary hover:text-destructive group-hover:opacity-100"
+      className="cursor-pointer rounded-md p-2 text-muted-foreground transition hover:bg-secondary hover:text-destructive [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:focus-visible:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100"
     >
       <Trash2 className="size-4" />
     </button>

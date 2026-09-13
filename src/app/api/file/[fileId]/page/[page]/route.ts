@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rasterizePages } from "@/lib/figures";
+import { DEMO_SESSION_ID, demoReader } from "@/lib/demo";
+import { isRateLimited } from "@/lib/rate-limit";
 
 // Renders one PDF page as a webp image, on demand — for wiki citation chips
 // ("(p. N)") that open the actual source page inline instead of the raw PDF.
@@ -17,16 +19,38 @@ export async function GET(
   }
 
   const supabase = await createClient();
-  const { data: file } = await supabase
+  const { data: mine } = await supabase
     .from("files")
     .select("storage_path")
     .eq("id", fileId)
     .single();
+
+  // Demo fallback, same rule as /api/figure: anonymous visitors may render pages
+  // of the one public demo session's files and nothing else. Rasterizing is
+  // CPU-heavy, so it's rate-limited per IP.
+  let file = mine as { storage_path: string } | null;
+  let storage = supabase.storage;
+  if (!file) {
+    const reader = demoReader();
+    const { data: demo } = await reader
+      .from("files")
+      .select("storage_path, session_id")
+      .eq("id", fileId)
+      .single();
+    if (demo?.session_id === DEMO_SESSION_ID) {
+      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+      if (isRateLimited(`demo-page:${ip}`)) {
+        return NextResponse.json({ error: "slow down" }, { status: 429 });
+      }
+      file = demo;
+      storage = reader.storage;
+    }
+  }
   if (!file) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
-  const { data: blob, error: dlErr } = await supabase.storage
+  const { data: blob, error: dlErr } = await storage
     .from("session-files")
     .download(file.storage_path);
   if (dlErr || !blob) {

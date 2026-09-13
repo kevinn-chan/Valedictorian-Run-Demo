@@ -147,8 +147,12 @@ export function Landing() {
             Don&apos;t take our word for it. Poke it.
           </h2>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            These are real artifacts from a real Computer Networks deck,
-            compiled by the app.
+            These are real artifacts from a Computer Networks deck, compiled by
+            the app. The{" "}
+            <Link href="/demo" className="text-primary underline underline-offset-2">
+              live demo
+            </Link>{" "}
+            runs on a separate sample course.
           </p>
           {/* Two things you can poke, then one worked answer. The third item
               used to be a third identical card that did nothing when clicked --

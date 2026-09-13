@@ -42,7 +42,11 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isPublic =
-    path === "/" || PUBLIC_PATHS.some((p) => path.startsWith(p));
+    path === "/" ||
+    PUBLIC_PATHS.some((p) => path.startsWith(p)) ||
+    // Page renders only (not /api/file/[id], the raw PDF): the route enforces
+    // its own access — own files, or the demo session's.
+    /^\/api\/file\/[^/]+\/page\/\d+$/.test(path);
   if (isPublic) return supabaseResponse;
 
   if (!email) {

@@ -5,31 +5,9 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import ReactMarkdown from "react-markdown";
 import { plainMath } from "@/lib/plain-math";
-
-interface FileRef {
-  id: string;
-  name: string;
-}
-
-
-// Turns "[filename p.N]" citations into markdown links so they render as
-// chips (via the `a` component below) that open the PDF at that page.
-// Tolerates multi-page labels ("p.28, 31") by linking the first page.
-function linkifyCitations(text: string, files: FileRef[]) {
-  const re =
-    /\[([^\[\]]{2,80}?)\s+p\.?\s*(\d+)(?:\s*[,–-]\s*\d+)*\]/g;
-  return text.replace(re, (match, name: string, page: string) => {
-    const file = files.find(
-      (f) =>
-        f.name.toLowerCase() === name.toLowerCase() ||
-        f.name
-          .toLowerCase()
-          .startsWith(name.toLowerCase().replace(/\.pdf$/, ""))
-    );
-    if (!file) return match;
-    return `[${name} p.${page}](/api/file/${file.id}#page=${page})`;
-  });
-}
+import { PageViewer } from "@/components/page-viewer";
+import { ThinkingStatus } from "@/components/thinking-status";
+import { linkifyCitations, parseCiteHref, type FileRef } from "@/lib/citations";
 
 function AssistantMessage({
   text,
@@ -38,24 +16,40 @@ function AssistantMessage({
   text: string;
   files: FileRef[];
 }) {
+  // Same inline page preview as wiki citations, instead of a raw PDF in a new tab.
+  const [open, setOpen] = useState<{ fileId: string; page: number } | null>(null);
   return (
     <div className="prose prose-sm max-w-none leading-relaxed [&_li]:my-0.5">
       <ReactMarkdown
         components={{
-          a: ({ href, children }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="mx-0.5 inline-block rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground no-underline transition hover:bg-secondary"
-            >
-              {children}
-            </a>
-          ),
+          a: ({ href, children }) => {
+            const cite = parseCiteHref(href);
+            const chip =
+              "mx-0.5 inline-block rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground no-underline transition hover:bg-secondary";
+            if (cite) {
+              return (
+                <button
+                  type="button"
+                  onClick={() => setOpen(cite)}
+                  className={chip}
+                >
+                  {children}
+                </button>
+              );
+            }
+            return (
+              <a href={href} target="_blank" rel="noreferrer" className={chip}>
+                {children}
+              </a>
+            );
+          },
         }}
       >
         {linkifyCitations(plainMath(text), files)}
       </ReactMarkdown>
+      {open && (
+        <PageViewer fileId={open.fileId} page={open.page} onClose={() => setOpen(null)} />
+      )}
     </div>
   );
 }
@@ -138,9 +132,7 @@ export function ChatClient({
         ))}
         {busy && messages.at(-1)?.role === "user" && (
           <div className="max-w-[90%] rounded-2xl rounded-bl-md bg-card px-4 py-3 shadow-sm ring-1 ring-border">
-            <p className="text-xs text-muted-foreground">
-              Reading your materials…
-            </p>
+            <ThinkingStatus first="Reading your materials…" />
           </div>
         )}
       </div>

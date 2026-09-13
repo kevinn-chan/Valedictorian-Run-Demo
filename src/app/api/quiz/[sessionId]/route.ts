@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { buildContext } from "@/lib/answer";
 import { llm } from "@/lib/llm";
+import { cleanQuestion } from "@/lib/quiz";
 
 export const maxDuration = 300;
 
@@ -41,9 +42,10 @@ export async function POST(
       prompt: `Create a 10-question mock exam over this corpus.
 - Mix easy recall, mechanism understanding, and calculation questions (use the corpus formulas with small concrete numbers).
 - Exactly 4 options each, one correct; wrong options must be plausible misconceptions.
-- Every question answerable strictly from the corpus; cite the page.`,
+- Every question answerable strictly from the corpus; cite the page in the \`page\` field only, not inside the explanation.
+- Plain-text/Unicode formulas (e.g. ŷ = b₀ + b₁x, s² = SSE/(n − 2)), never LaTeX.`,
     });
-    return NextResponse.json({ questions: object.questions });
+    return NextResponse.json({ questions: object.questions.map((q) => cleanQuestion(q)) });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "quiz generation failed" },

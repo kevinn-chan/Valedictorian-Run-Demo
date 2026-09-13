@@ -85,7 +85,7 @@ export function FileList({ files, base }: { files: FileRow[]; base: string }) {
             type="button"
             aria-label={`Delete ${f.name}`}
             onClick={() => handleDelete(f)}
-            className="cursor-pointer rounded-md p-1.5 text-muted-foreground opacity-0 transition hover:bg-secondary hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100"
+            className="cursor-pointer rounded-md p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-destructive [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:focus-visible:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100"
           >
             <Trash2 className="size-3.5" />
           </button>

@@ -45,12 +45,14 @@ export function PlanForm({
           type="text"
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
+          aria-label="Goal"
           placeholder="Goal, e.g. confident on all ARQ protocols"
           className="min-w-64 flex-1 rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
         />
         <input
           type="date"
           required
+          aria-label="Exam date"
           value={examDate}
           onChange={(e) => setExamDate(e.target.value)}
           className="rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
@@ -67,6 +69,11 @@ export function PlanForm({
               : "Generate plan"}
         </button>
       </div>
+      {/* The plan route saves both onto the session, which drives the countdown
+          on the session page — say so instead of changing them silently. */}
+      <p className="text-xs text-muted-foreground">
+        Generating also saves this goal and exam date to the session.
+      </p>
       {busy && (
         <p className="text-xs text-muted-foreground">
           Building your schedule from the corpus wiki. This takes up to a minute.

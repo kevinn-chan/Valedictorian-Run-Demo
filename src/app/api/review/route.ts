@@ -22,12 +22,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "bad request" }, { status: 400 });
     }
     await supabase.from("cards").update(prev).eq("id", cardId);
-    await supabase
+    // Delete by id: PostgREST ignores order/limit on DELETE, so filtering by
+    // card_id alone wiped the card's entire review history, not just this grade.
+    const { data: last } = await supabase
       .from("reviews")
-      .delete()
+      .select("id")
       .eq("card_id", cardId)
-      .order("created_at", { ascending: false })
-      .limit(1);
+      .order("reviewed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (last) await supabase.from("reviews").delete().eq("id", last.id);
     return NextResponse.json({ ok: true });
   }
 

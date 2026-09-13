@@ -5,22 +5,43 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import ReactMarkdown from "react-markdown";
 import { plainMath } from "@/lib/plain-math";
+import { PageViewer } from "@/components/page-viewer";
+import { ThinkingStatus } from "@/components/thinking-status";
+import { linkifyCitations, parseCiteHref, type FileRef } from "@/lib/citations";
 
-// Render "[file p.N]" citations as small chips (plain — the source PDFs are
-// private, so demo citations don't link out).
-function AssistantMessage({ text }: { text: string }) {
-  const chipped = plainMath(text).replace(
-    /\[([^\[\]]{2,80}?)\s+p\.?\s*(\d+)(?:\s*[,–-]\s*\d+)*\]/g,
-    (_m, name: string, page: string) => `\`${name} p.${page}\``
-  );
+// "[file p.N]" citations render as chips that open the source page inline —
+// the page route serves the demo session's pages (and only those) publicly.
+function AssistantMessage({ text, files }: { text: string; files: FileRef[] }) {
+  const [open, setOpen] = useState<{ fileId: string; page: number } | null>(null);
   return (
-    <div className="prose prose-sm max-w-none leading-relaxed text-foreground [&_code]:rounded-full [&_code]:bg-secondary [&_code]:px-2 [&_code]:py-0.5 [&_code]:text-xs [&_code]:font-medium [&_code]:text-primary [&_code]:before:content-none [&_code]:after:content-none [&_li]:my-0.5">
-      <ReactMarkdown>{chipped}</ReactMarkdown>
+    <div className="prose prose-sm max-w-none leading-relaxed text-foreground [&_li]:my-0.5">
+      <ReactMarkdown
+        components={{
+          a: ({ href, children }) => {
+            const cite = parseCiteHref(href);
+            if (!cite) return <a href={href} target="_blank" rel="noreferrer">{children}</a>;
+            return (
+              <button
+                type="button"
+                onClick={() => setOpen(cite)}
+                className="mx-0.5 inline-block rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-primary no-underline transition hover:bg-accent"
+              >
+                {children}
+              </button>
+            );
+          },
+        }}
+      >
+        {linkifyCitations(plainMath(text), files)}
+      </ReactMarkdown>
+      {open && (
+        <PageViewer fileId={open.fileId} page={open.page} onClose={() => setOpen(null)} />
+      )}
     </div>
   );
 }
 
-export function DemoChat({ starters }: { starters: string[] }) {
+export function DemoChat({ starters, files }: { starters: string[]; files: FileRef[] }) {
   const [input, setInput] = useState("");
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({ api: "/api/demo/chat" }),
@@ -65,7 +86,7 @@ export function DemoChat({ starters }: { starters: string[] }) {
             {m.parts.map((p, i) =>
               p.type === "text" ? (
                 m.role === "assistant" ? (
-                  <AssistantMessage key={i} text={p.text} />
+                  <AssistantMessage key={i} text={p.text} files={files} />
                 ) : (
                   <span key={i} className="whitespace-pre-wrap">
                     {p.text}
@@ -76,7 +97,7 @@ export function DemoChat({ starters }: { starters: string[] }) {
           </div>
         ))}
         {busy && messages.at(-1)?.role === "user" && (
-          <p className="text-xs text-muted-foreground">Reading the notes…</p>
+          <ThinkingStatus />
         )}
         {error && (
           <p className="text-xs text-muted-foreground">

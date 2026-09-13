@@ -57,7 +57,8 @@ Write ONE unified weekly schedule in markdown that interleaves these courses:
 - Courses with no exam date get lower urgency — light maintenance passes, not the bulk of the schedule.
 - Reference ONLY the topics listed above, by their exact titles. Do not invent topics or courses.
 - Day-by-day for the next 7 days, naming which course + topic(s) per day and roughly how long.
-- End with a one-line note on what to reassess next week.`,
+- End with a one-line note on what to reassess next week.
+- Write any formula in plain text/Unicode, never LaTeX or $...$ delimiters.`,
   });
 
   const { error } = await supabase.from("study_plans").insert({

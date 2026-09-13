@@ -51,5 +51,10 @@ export async function GET(
     return NextResponse.json({ error: "could not sign" }, { status: 500 });
   }
 
-  return NextResponse.redirect(signed.signedUrl);
+  // A fresh signed URL per request defeats the browser image cache, so the
+  // occlusion grid re-signed and re-downloaded 60+ figures on every visit.
+  // Cache the redirect for less than the URL's 1h lifetime.
+  const res = NextResponse.redirect(signed.signedUrl);
+  res.headers.set("Cache-Control", "private, max-age=3000");
+  return res;
 }

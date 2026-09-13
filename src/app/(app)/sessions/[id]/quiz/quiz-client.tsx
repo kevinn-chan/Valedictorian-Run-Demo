@@ -37,8 +37,15 @@ export function QuizClient({
     setError("");
     setSubmitted(false);
     setPicked({});
-    const res = await fetch(`/api/quiz/${sessionId}`, { method: "POST" });
+    // Drop the old exam so the loading state shows. Leaving it on screen, cleared,
+    // for the ~30s generation invited answers that were then silently replaced.
+    setQuestions(null);
+    const res = await fetch(`/api/quiz/${sessionId}`, { method: "POST" }).catch(() => null);
     setBusy(false);
+    if (!res) {
+      setError("quiz generation failed");
+      return;
+    }
     if (!res.ok) {
       const j = await res.json().catch(() => null);
       setError(j?.error ?? "quiz generation failed");
@@ -146,18 +153,22 @@ export function QuizClient({
                 <button
                   key={j}
                   disabled={submitted}
+                  aria-pressed={chosen}
                   onClick={() => setPicked((p) => ({ ...p, [i]: j }))}
-                  className={`block w-full rounded-md border px-3 py-2 text-left text-sm ${
+                  className={`flex w-full items-start gap-2 rounded-md border px-3 py-2 text-left text-sm ${
                     correct
                       ? "border-green-600 bg-green-500/10"
                       : wrong
                         ? "border-red-600 bg-red-500/10"
                         : chosen
-                          ? "border-primary"
+                          ? "border-primary bg-primary/10 font-medium"
                           : "cursor-pointer transition hover:-translate-y-0.5 hover:border-primary/60"
                   }`}
                 >
-                  {opt}
+                  <span aria-hidden className="w-4 shrink-0 text-primary">
+                    {chosen ? "●" : ""}
+                  </span>
+                  <span>{opt}</span>
                 </button>
               );
             })}

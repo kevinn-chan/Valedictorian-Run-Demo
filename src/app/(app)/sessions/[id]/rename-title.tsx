@@ -18,7 +18,7 @@ export function RenameTitle({ id, title }: { id: string; title: string }) {
           type="button"
           aria-label="Rename session"
           onClick={() => setEditing(true)}
-          className="rounded-md p-1.5 text-muted-foreground opacity-0 transition hover:bg-secondary hover:text-primary group-hover:opacity-100"
+          className="rounded-md p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-primary [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:focus-visible:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100"
         >
           <Pencil className="size-4" />
         </button>

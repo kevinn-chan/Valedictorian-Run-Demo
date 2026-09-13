@@ -34,7 +34,8 @@ Write a targeted study plan in markdown:
 - A day-by-day (or session-by-session) schedule from today until the exam date, with realistic pacing and built-in revision passes near the exam.
 - Reference ONLY the topics listed above, by their exact titles. Do not invent topics.
 - For each scheduled block: which topic(s), what to do (read the wiki page, work the examples, self-test), and roughly how long.
-- End with a short "day before the exam" checklist.`,
+- End with a short "day before the exam" checklist.
+- Write any formula in plain text/Unicode (e.g. SST = SSR + SSE, R² = SSR/SST), never LaTeX or $...$ delimiters.`,
   });
 
   const { error: insErr } = await supabase.from("learning_plans").insert({

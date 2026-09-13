@@ -11,6 +11,8 @@ export default async function ReviewPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  // One timestamp for both the capped queue and the full due count, so they agree.
+  const nowIso = new Date().toISOString();
 
   const [{ data: session }, { data: due }, { data: allCards }, { data: topics }] =
     await Promise.all([
@@ -23,7 +25,7 @@ export default async function ReviewPage({
         .from("cards")
         .select("id, front, back, topic_slug, source_ref, interval_days, ease, reps, lapses")
         .eq("session_id", id)
-        .lte("due_at", new Date().toISOString())
+        .lte("due_at", nowIso)
         .order("due_at")
         .limit(50),
       supabase
@@ -44,6 +46,12 @@ export default async function ReviewPage({
     (topics ?? []).map((t) => ({ ...t, session_id: id }))
   );
 
+  // The queue is capped at 50; count every due card so "50 remaining" doesn't
+  // contradict the session page's "56 due".
+  const dueTotal = (allCards ?? []).filter(
+    (c) => Date.parse(c.due_at) <= Date.parse(nowIso)
+  ).length;
+
   return (
     <main className="mx-auto w-full max-w-2xl px-5 py-8 sm:px-8 lg:py-12">
       <PageHeader
@@ -52,7 +60,7 @@ export default async function ReviewPage({
         title="Review"
         description="Grade yourself honestly. The schedule does the rest."
       />
-      <ReviewClient sessionId={id} cards={cards} />
+      <ReviewClient sessionId={id} cards={cards} dueTotal={dueTotal} />
     </main>
   );
 }

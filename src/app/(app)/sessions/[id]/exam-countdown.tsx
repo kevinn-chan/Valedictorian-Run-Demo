@@ -37,6 +37,10 @@ export function ExamCountdown({
         <input
           type="date"
           name="exam_date"
+          // Empty is only meaningful when clearing an existing date; otherwise
+          // Set did nothing with no feedback.
+          required={!examDate}
+          aria-label="Exam date"
           defaultValue={examDate ?? ""}
           min={todayStr || undefined}
           className="h-8 rounded-lg border bg-background px-2.5 text-sm outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-ring/25"
