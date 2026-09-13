@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rasterizePages } from "@/lib/figures";
 import { DEMO_SESSION_ID, demoReader } from "@/lib/demo";
-import { isRateLimited } from "@/lib/rate-limit";
+import { isRateLimitedDurable } from "@/lib/rate-limit";
 
 // Renders one PDF page as a webp image, on demand — for wiki citation chips
 // ("(p. N)") that open the actual source page inline instead of the raw PDF.
@@ -38,8 +38,15 @@ export async function GET(
       .eq("id", fileId)
       .single();
     if (demo?.session_id === DEMO_SESSION_ID) {
+      // Same two-layer shape as /api/demo/chat: a per-IP cap sized for someone
+      // clicking through citations (renders are browser-cached for an hour),
+      // then a ceiling across everyone, since rotating IPs make per-IP limits
+      // no bound on total rasterizing work.
       const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-      if (isRateLimited(`demo-page:${ip}`)) {
+      if (
+        (await isRateLimitedDurable(`demo-page:ip:${ip}`, 20, 60)) ||
+        (await isRateLimitedDurable("demo-page:global", 600, 3600))
+      ) {
         return NextResponse.json({ error: "slow down" }, { status: 429 });
       }
       file = demo;

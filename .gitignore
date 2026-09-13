@@ -43,3 +43,9 @@ next-env.d.ts
 .shots.mjs
 .idea/
 .superpowers/
+
+# Working notes kept locally, never committed: they can carry real user email
+# addresses, and this repo is public.
+HANDOFF.md
+HANDOFF-archive.md
+CHECKPOINTS.md

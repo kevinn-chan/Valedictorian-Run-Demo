@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { FlipCard, MiniQuiz } from "./landing-demos";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { demoCorpusStats } from "@/lib/demo";
 
 const OBJECTIVES = [
   {
@@ -50,7 +51,14 @@ const STEPS = [
   },
 ];
 
-export function Landing() {
+export async function Landing() {
+  // The one piece of "imagery" in the hero is a true number. Every hero pattern
+  // worth copying here either needs a device mockup (the SaaS cliché this
+  // product lists as an anti-reference) or stock photography (ruled out by
+  // ui-kit.tsx's own rule: the corpus is the star, so no stock art). are.na,
+  // the closest brand match, puts no image in its hero at all and anchors it on
+  // a live count instead. This is ours, read from the public demo course.
+  const stats = await demoCorpusStats();
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
@@ -116,6 +124,23 @@ export function Landing() {
               Try the live demo
             </Link>
           </div>
+          {stats && stats.topics > 0 && (
+            <p className="relative mt-6 text-sm text-muted-foreground">
+              That demo is one real course:{" "}
+              <span className="font-medium text-foreground">
+                {stats.files} lecture {stats.files === 1 ? "deck" : "decks"}
+              </span>{" "}
+              compiled into{" "}
+              <span className="font-medium text-foreground">
+                {stats.topics} topics
+              </span>{" "}
+              and{" "}
+              <span className="font-medium text-foreground">
+                {stats.cards} cue cards
+              </span>
+              .
+            </p>
+          )}
         </section>
 
         {/* How it works */}

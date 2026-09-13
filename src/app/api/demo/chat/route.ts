@@ -4,7 +4,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { buildContext, selectFigureImages } from "@/lib/answer";
 import { DEMO_SESSION_ID, demoReader } from "@/lib/demo";
 import { llm } from "@/lib/llm";
-import { isRateLimited } from "@/lib/rate-limit";
+import { isRateLimitedDurable } from "@/lib/rate-limit";
 
 export const maxDuration = 60;
 
@@ -22,12 +22,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "demo not configured" }, { status: 404 });
   }
 
-  // Public, unauthenticated endpoint — cap requests per IP so one visitor
-  // can't drain the demo's Gemini quota. (Reuses the shared rate limiter.)
+  // Public, unauthenticated, and every call bills a model. Per-IP first, so one
+  // visitor can't sit on it.
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (isRateLimited(`demo-chat:${ip}`)) {
+  if (await isRateLimitedDurable(`demo-chat:ip:${ip}`, 5, 60)) {
     return NextResponse.json(
       { error: "Too many requests — try again in a minute." },
+      { status: 429 }
+    );
+  }
+
+  // Then a ceiling across everyone. Per-IP limits bound one attacker's rate,
+  // not the bill: a public link plus rotating addresses is unbounded spend
+  // otherwise. This is the number to raise if the demo ever gets popular.
+  if (await isRateLimitedDurable("demo-chat:global", 120, 3600)) {
+    return NextResponse.json(
+      { error: "The demo is at capacity for now — try again later." },
       { status: 429 }
     );
   }
