@@ -59,33 +59,65 @@ claim isn't "retrieval is dead," it's "vector RAG is unnecessary for the common 
 
 ---
 
-## Try it
+## Run your own
 
-**Deploy your own** (≈15 min; needs free Supabase + Gemini accounts):
+This repo is ready to self-host. Nothing in it is tied to the original deployment: every
+key, email and URL is a placeholder you replace with your own. It runs entirely on free
+tiers, for yourself alone or a few people.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkevinn-chan%2FValedictorian-Run-Demo&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ALLOWED_EMAILS,PROFILES,GOOGLE_GENERATIVE_AI_API_KEY&envDescription=Supabase%20project%20keys%2C%20allowlisted%20emails%2C%20and%20a%20Gemini%20API%20key)
+### What you need
 
-Then follow **[SETUP.md](SETUP.md)**. It starts with a table of every placeholder you need
-to replace, then walks through the Supabase project, all 13 migrations in
-`supabase/migrations/`, magic-link email and redirect settings, and Vercel. Or run locally:
+- **Node.js 20.9 or newer** and a GitHub account.
+- Free accounts on **[Supabase](https://supabase.com)** (database, file storage, sign-in),
+  **[Google AI Studio](https://aistudio.google.com)** (the Gemini API key), and
+  **[Vercel](https://vercel.com)** (hosting; optional if you only run it locally).
+
+### The steps, in order
+
+**[SETUP.md](SETUP.md)** walks through each step click by click, and opens with a table of every
+placeholder to replace. The short version:
+
+1. **Supabase:** create a project, run the 13 SQL files in `supabase/migrations/` in order,
+   and allowlist the email address of each person who will sign in.
+2. **Supabase Auth:** add your local and deployed URLs to the redirect list. If magic-link
+   emails don't arrive, set up your own email sender (the built-in one is for testing).
+3. **Gemini:** create an API key.
+4. **Configure:** copy `.env.example` to `.env.local` and fill it in.
+5. **Run it:** locally, or deploy to Vercel.
 
 ```bash
 npm install
-cp .env.example .env.local   # replace every placeholder in .env.local — never in .env.example
+cp .env.example .env.local   # fill in .env.local, never .env.example (it's committed)
 npm run dev                  # http://localhost:3000
 ```
 
-**You must replace:** your Supabase URL and keys, a Gemini API key, and the example emails and
-names in `ALLOWED_EMAILS` / `PROFILES` (plus the matching `allowed_emails` rows). Real values go
-only in `.env.local` and Vercel's Environment Variables; `.env*` is gitignored.
+Or deploy straight to Vercel. Do step 1 first, because the button asks for your Supabase keys:
 
-**A note on the login:** sign-in uses **magic links**: pick a profile, receive a sign-in
-link by email, click it. Once signed in, anyone on the allowlist can switch into any other
-profile instantly (no second email), so it's built for a small, trusted group, not open
-public signup. The public **[`/demo`](https://valedictorian-run.vercel.app/demo)** above is how
-strangers try it without an account. See **[SECURITY.md](SECURITY.md)** for exactly what
-to change before an open multi-user deploy (remove profile switching, per-user signup, drop
-the allowlist, per-user quotas + bring-your-own API key).
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkevinn-chan%2FValedictorian-Run-Demo&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ALLOWED_EMAILS,PROFILES,GOOGLE_GENERATIVE_AI_API_KEY&envDescription=Supabase%20project%20keys%2C%20allowlisted%20emails%2C%20and%20a%20Gemini%20API%20key)
+
+### What you replace
+
+| Setting | What goes there | Required? |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase project's URL and keys | Yes |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Your Gemini API key | Yes |
+| `ALLOWED_EMAILS` | Comma-separated emails of the people who can sign in | Yes |
+| `PROFILES` | `Name:email` for each person, shown as buttons on the login screen. One person is fine, and so are more than two. | Yes |
+| `allowed_emails` table | The same emails, added in Supabase (SETUP.md step 1c) | Yes |
+| `DEMO_SESSION_ID`, `DEMO_GEMINI_KEY` | Turn on a public read-only `/demo` of one of your sessions | No |
+| `OPENAI_API_KEY`, `LLM_PROVIDER` | Optional fallback model provider | No |
+| `CRON_SECRET` | Protects the daily keep-alive job | No |
+
+Real values go only in `.env.local` (gitignored) and Vercel's Environment Variables.
+
+### How sign-in works
+
+Pick your profile, get a sign-in link by email, click it. There are no passwords. Once
+signed in, anyone on the allowlist can switch into any other profile without a second email.
+That suits you alone or a small trusted group; before opening it to strangers, read
+**[SECURITY.md](SECURITY.md)**, which lists exactly what to change. The
+**[live demo](https://valedictorian-run.vercel.app/demo)** is the original author's
+deployment, so you can try the app before setting anything up.
 
 ---
 
